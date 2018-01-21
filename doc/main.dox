@@ -1,0 +1,1814 @@
+/// \mainpage extension Binary Protocol
+/// \tableofcontents
+/// This library implements "extension" binary protocol in terms of
+/// <a href="https://github.com/arobenko/comms_champion#comms-library">COMMS Library</a>.
+/// It is highly recommended to have documentation of the latter also opened and used for reference
+/// in order to fully understand this tutorial.
+/// 
+/// \section main_page_interface Interface Class
+/// The main philosophy of the \b COMMS library is to have single 
+/// implementation of the messages and fields in the binary protocol, while
+/// allowing the application being developed to configure polymorphic interfaces
+/// as well as data types for some critical fields.
+///
+/// The basic interface class is defined to be \ref sbe_example::Message. It defines
+/// the protocol endian as well as internal message id type (\ref sbe_example::MsgId).
+/// \code
+/// class sbe_example::Message
+/// {
+///     // Define endian type tag
+///     using Endian = comms::traits::endian::Little;
+///
+///     // Define type of the message ID
+///     using MsdIdType = sbe_example::MsgId;
+///
+///     // Define type of the message ID when used as function parameter
+///     using MsgIdParamType = sbe_example::MsgId;
+///
+///     // Set the blockLength value (used by transport framing)
+///     void setBlockLength(std::size_t value);
+///
+///     // Get the blockLength value
+///     std::size_t getBlockLength() const;
+///
+///     // Set the version value
+///     void setVersion(unsigned value);
+///
+///     // Get the version value
+///     unsigned getVersion() const;
+/// };
+/// \endcode
+/// This basic interface does \b NOT define any virtual functions. However,
+/// it may be extended using various options from \b comms::option namespace.
+/// Below is basic guide and examples on available options. For more details please
+/// read the <b>"Messages Tutorial"</b> page of the \b COMMS library documentation.
+///
+/// \subsection main_page_interface_read Polymorphic Read
+/// In order to introduce polymorphic read functionality, provide type of
+/// read iterator using \b comms::option::ReadIterator option.
+/// \code
+/// using MyInterface = 
+///     sbe_example::Message<
+///         comms::option::ReadIterator<const std::uint8_t*>
+///     >;
+/// \endcode
+/// The code is equivalent to having the following member types and functions:
+/// \code
+/// class MyInterface
+/// {
+/// public:
+///     // Iterator used for reading
+///     using ReadIterator = const std::uint8_t*;
+///
+///     // Read operation (using NVI idiom)
+///     comms::ErrorStatus read(ReadIterator& iter, std::size_t len)
+///     {
+///         return readImpl(iter, len);
+///     }
+///
+/// protected:
+///     // Polymorphic read implemented in actual message class
+///     virtual comms::ErrorStatus readImpl(ReadIterator& iter, std::size_t len) = 0;
+/// };
+/// \endcode
+///
+/// \subsection main_page_interface_write Polymorphic Write
+/// In order to introduce polymorphic write functionality, provide type of
+/// write iterator using \b comms::option::WriteIterator option.
+/// \code
+/// using MyInterface =
+///     sbe_example::Message<
+///         comms::option::WriteIterator<std::uint8_t*>
+///     >;
+/// \endcode
+/// The code is equivalent to having the following member types and functions:
+/// \code
+/// class MyInterface
+/// {
+/// public:
+///     // Iterator used for writing
+///     using WriteIterator = std::uint8_t*;
+///
+///     // Write operation (using NVI idiom)
+///     comms::ErrorStatus write(WriteIterator& iter, std::size_t len) const
+///     {
+///         return writeImpl(iter, len);
+///     }
+///
+/// protected:
+///     // Polymorphic write implemented in actual message class
+///     virtual comms::ErrorStatus writeImpl(WriteIterator& iter, std::size_t len) const = 0;
+/// };
+/// \endcode
+///
+/// \subsection main_page_interface_length Polymorphic Serialisation Length Retrieval
+/// In order to introduce polymorphic serialisation length retrieval functionality, 
+/// pass \b comms::option::LengthInfoInterface option to the \ref sbe_example::Message
+/// interface class.
+/// \code
+/// using MyInterface = 
+///     sbe_example::Message<
+///         comms::option::LengthInfoInterface
+///     >;
+/// \endcode
+/// The code is equivalent to having the following member functions:
+/// \code
+/// class MyInterface
+/// {
+/// public:
+///     // Length retrieval operation (using NVI idiom)
+///     std::size_t length() const
+///     {
+///         return lengthImpl();
+///     }
+/// 
+/// protected:
+///     // Polymorphic length retrieval implemented in actual message class
+///     virtual std::size_t lengthImpl() const = 0;
+/// };
+/// \endcode
+///
+/// \subsection main_page_interface_id Polymorphic Message ID Retrieval
+/// In order to introduce polymorphic message ID retrieval functionality,
+/// pass \b comms::option::IdInfoInterface option to the \ref sbe_example::Message
+/// interface class.
+/// \code
+/// using MyInterface =
+///     sbe_example::Message<
+///         comms::option::IdInfoInterface
+///     >;
+/// \endcode
+/// The code is equivalent to having the following member functions:
+/// \code
+/// class MyInterface
+/// {
+/// public:
+///     // ID retrieval operation (using NVI idiom)
+///     MsgIdParamType getId() const
+///     {
+///         return getIdImpl();
+///     }
+///
+/// protected:
+///     // Polymorphic id retrieval implemented in actual message class
+///     virtual MsgIdParamType getIdImpl() const = 0;
+/// };
+/// \endcode
+///
+/// \subsection main_page_interface_valid Polymorphic Validity Check
+/// The SBE schemas allow limiting range of valid values for some fields.
+/// The message is considered to be valid if all of its fields are valid.
+/// In order to introduce polymorphic message validity check functionality, 
+/// pass \b comms::option::ValidCheckInterface option to the \ref sbe_example::Message
+/// interface class.
+/// \code
+/// using MyInterface = 
+///     sbe_example::Message<
+///         comms::option::ValidCheckInterface
+///     >;
+/// \endcode
+/// The code is equivalent to having the following member functions:
+/// \code
+/// class MyInterface
+/// {
+/// public:
+///     // Validity check operation (using NVI idiom)
+///     bool valid() const
+///     {
+///         return validImpl();
+///     }
+/// 
+/// protected:
+///     // Polymorphic validity check implemented in actual message class
+///     virtual bool validImpl() const = 0;
+/// };
+/// \endcode
+///
+/// \subsection main_page_interface_dispatch Polymorphic Dispatch to Handling
+/// In order to introduce polymorphic dispatch of the message to its handling function,
+/// provide the type of your handling object using \b comms::option::Handler option.
+/// Please refer to \ref main_page_handling section for details on the required interface
+/// of the handling object type.
+/// \code
+/// using MyInterface =
+///     sbe_example::Message<
+///         comms::option::Handler<MyHandler>
+///     >;
+/// \endcode
+/// The code is equivalent to having the following type and member functions:
+/// \code
+/// class MyInterface
+/// {
+/// public:
+///     // Redefinition of the handler type
+///     using Handler = MyHandler;
+///
+///     // Dispatch to handling operation (using NVI idiom)
+///     void dispatch(MyHandler& handler) const
+///     {
+///         dispatchImpl(handler);
+///     }
+///
+/// protected:
+///     // Polymorphic dispatch to handling implemented in actual message class
+///     virtual void dispatchImpl() const = 0;
+/// };
+/// \endcode
+/// \b NOTE, that \b dispatch() member function may return a value (handling status), please
+/// refer to \ref main_page_handling section for details.
+///
+/// \subsection main_page_interface_refresh Polymorphic Refresh
+/// This library allows manual update of the message object contents, such as
+/// updating the version of the message. Such an update, may result the message
+/// object being in an invalid state, where some fields are marked to exist and will be
+/// serialised in write operation, when they should not be according to the new
+/// version value. The \b COMMS library provides a @b refresh() interface member function
+/// for such cases. It can be enabled by using \b comms::option::RefreshInterface
+/// option.
+/// \code
+/// using MyInterface =
+///     sbe_example::Message<
+///         comms::option::RefreshInterface
+///     >;
+/// \endcode
+/// The code is equivalent to having the following member functions:
+/// \code
+/// class MyInterface
+/// {
+/// public:
+///     // Refresh operation (using NVI idiom)
+///     bool refresh()
+///     {
+///         return refreshImpl();
+///     }
+///
+/// protected:
+///     // Polymorphic refresh implemented in actual message class
+///     virtual void refreshImpl() const = 0;
+/// };
+/// \endcode
+/// \b NOTE, that \b refresh() member function returns \b true if
+/// <b>at least</b> one of the inner fields has been updated, and \b false
+/// if message contents haven't been changed. Also note, that the message
+/// contents are updated (marked as exsiting or missing) according the
+/// version information, not the vice versa.
+///
+/// Below is an example on updating the version via common interface class:
+/// \code
+/// bool updateVersion(MyMessage& msg, unsigned version)
+/// {
+///     msg.setVersion(version);
+///     return msg.refresh();
+/// }
+/// \endcode
+///
+/// \subsection main_page_interface_meta Meta-Programming
+/// The \b comms::Message class (extended by \ref sbe_example::Message) from the 
+/// \b COMMS library defines multiple
+/// \b constexpr static functions to allow compile time analysis of
+/// the supported interface. The \ref sbe_example::Message class inherits all this functions
+/// \code
+/// namespace sbe_example
+/// {
+///
+/// template <typename... TOpt>
+/// class Message : public
+///     comms::Message<
+///         ...,
+///         TOpt...
+///     >
+/// {
+/// public:
+///     // Check whether polymorphic read is supported
+///     static consexpr bool hasRead();
+/// 
+///     // Check whether polymorphic write is supported
+///     static consexpr bool hasWrite();
+///
+///     // Check whether polymorphic length calculation is supported
+///     static consexpr bool hasLength();
+///
+///     // Check whether polymorphic message ID retrieval is supported
+///     static constexpr bool hasGetLength();
+///
+///     // Check whether polymorphic validity check is supported
+///     static constexpr bool hasValid();
+///
+///     // Check whether polymorphic dispatch is supported
+///     static constexpr bool hasDispatch();
+///
+///     // Check whether polymorphic refresh is supported
+///     static constexpr bool hasRefresh();
+/// };
+///
+/// } // namespace sbe_example
+/// \endcode
+/// These functions may be used at compile time to determine the supported
+/// interface if needed.
+/// 
+/// \subsection main_page_interface_input_output Input / Output Interfaces
+/// Some protocols may use uni-directional messages, i.e. some messages only
+/// sent but never received, or only received, but never sent. In this case,
+/// input messages may require polymorphic read, but do not require polymorphic
+/// write. The output messages, on the other hand, will require support for
+/// polymorphic write, but do not need support for read. If this is the case,
+/// then it is recommended to split the common interface class into two separate
+/// ones. For example:
+/// \code
+/// // Interface for input messages
+/// using MyIntputMessage = 
+///     sbe_example::Message<
+///         comms::option::ReadIterator<const std::uint8*>, // support for read
+///         comms::option::Handler<MyHandler> // support for dispatch
+///     >;
+///
+/// // Interface for output messages
+/// using MyOutputMessage =
+///     sbe_example::Message<
+///         comms::option::WriteIterator<std::uint8_t*>, // support for polymorphic write
+///         comms::option::IdInfoInterface, // Support for polymorphic id retrieval
+///         comms::option::LengthInfoInterface // Support for polymorphic output buffer length calculation
+///     >;
+/// \endcode
+/// These classes may be passed as the first template parameter to all the
+/// protocol message definition classes. See \ref main_page_protocol_messages
+/// section below for more details.
+///
+/// \section main_page_protocol_messages Protocol Messages
+/// All the defined protocol message classes reside in \ref sbe_example::message namespace
+/// (include/sbe_example/message folder). Every message definition class receives
+/// two template parameters. The first one is chosen common message interface
+/// class (see @ref main_page_interface section above). The second parameter is
+/// a struct of extra parameters to various fields which may be used to change
+/// the default behaviour and/or their inner data structures. Please refer to
+/// \ref main_page_customization section below on more details.
+///
+/// Every message class extens \b comms::MessageBase class and provides
+/// (by inheritence or overriding) the following \b non-virtual member functions:
+/// \code
+/// template <...>
+/// class SomeProtocolMessage : public comms::MessageBase<...>
+/// {
+/// public:
+///     // Read from any iterator
+///     template <typename TIter>
+///     comms::ErrorStatus doRead(TIter& iter, std::size_t len);
+///
+///     // Write to any iterator
+///     template <typename TIter>
+///     comms::ErrorStatus doWrite(Iter& iter, std::size_t len) const;
+///
+///     // Get message id
+///     static constexpr MsgIdParamType doGetId();
+///
+///     // Serialisation length
+///     std::size_t doLength() const;
+///
+///     // Validity check
+///     bool doValid() const;
+///
+///     // Refresh (update fields according to version)
+///     bool doRefresh();
+/// };
+/// \endcode
+/// All of these member functions can be used at any time when actual message
+/// type is known, regardless of what polymorphic interface is defined.
+///
+/// For example, updating message version without need for \ref main_page_interface_refresh
+/// \code
+/// template <typename TMsg>
+/// void updateVersion(TMsg& msg, unsigned version)
+/// {
+///     msg.setVersion(version);
+///     msg.doRefresh();
+/// }
+/// \endcode
+/// Based on the provided \ref main_page_interface class (first template parameter),
+/// The \b comms::MessageBase class (extended by actual message definition one)
+/// will automatically implement virtual \b *Impl() member functions defined
+/// by the interface class.
+/// \code
+/// template <...>
+/// class SomeProtocolMessage : public comms::MessageBase<...>
+/// {
+/// public:
+///     // Read from any iterator
+///     template <typename TIter>
+///     comms::ErrorStatus doRead(TIter& iter, std::size_t len);
+///
+/// protected:
+///     // Overriding polymorphic read
+///     virtual comms::ErrorStatus readImpl(ReadIterator& iter, std::size_t len)
+///     {
+///         return doRead(iter, len);
+///     }
+/// };
+/// \endcode
+/// Every message bundles its inner fields into \b std::tuple and provides
+/// and access to it using \b fields() member functions (inherited from
+/// \b comms::MessageBase).
+/// \code
+/// template <...>
+/// class SomeProtocolMessage : public comms::MessageBase<...>
+/// {
+/// public:
+///     // All fields bundled in std::tuple
+///     using AllFields = std::tuple<...>;
+///
+///     // Access to fields
+///     AllFields& fields();
+///
+///     // Const access to fields
+///     const AllFields& fields() const;
+/// };
+/// \endcode
+/// Empty messages, that don't define any inner field, will have an empty tuple.
+///
+/// Every non-empty message class also uses \b COMMS_MSG_FIELDS_ACCESS() macro 
+/// from \b COMMS library with names of the fields.
+///
+/// For example:
+/// \code
+/// class SomeProtocolMessage : public comms::MessageBase<...>
+/// {
+/// public:
+///     COMMS_MSG_FIELDS_ACCESS(name1, name2, name3);
+/// };
+/// \endcode
+/// The usage of the macro defines the following convenience access enum and
+/// functions:
+/// \code
+/// template <...>
+/// class SomeProtocolMessage : public comms::MessageBase<...>
+/// {
+/// public:
+///     // Indices of the fields
+///     enum FieldIdx
+///     {
+///         FieldIdx_name1,
+///         FieldIdx_name2,
+///         FieldIdx_name3,
+///         FieldIdx_numOfValues
+///     };
+///
+///     // Access to first field
+///     typename std::tuple_element<FieldIdx_name1, AllFields>::type& field_name1();
+///
+///     // Const access to first field
+///     const typename std::tuple_element<FieldIdx_name1, AllFields>::type& field_name1() const;
+///
+///     // Access to second field
+///     typename std::tuple_element<FieldIdx_name2, AllFields>::type& field_name2();
+///
+///     // Const access to second field
+///     const typename std::tuple_element<FieldIdx_name2, AllFields>::type& field_name2() const;
+///
+///     // Access to third field
+///     typename std::tuple_element<FieldIdx_name3, AllFields>::type& field_name3();
+///
+///     // Const access to third field
+///     const typename std::tuple_element<FieldIdx_name3, AllFields>::type& field_name3() const;
+/// };
+/// \endcode
+/// Access to the inner fields can be using names
+/// \code
+/// SomeProtocolMessage<...> msg;
+/// msg.field_name1().value() = ...;
+/// msg.field_name2().value() = ...;
+/// msg.field_name3().value() = ...;
+/// \endcode
+/// or field index (can be useful in meta-programming)
+/// \code
+/// using Msg = SomeProtocolMessage<...>;
+/// Msg msg;
+/// std::get<Msg::FieldIdx_name1>(msg.fields()).value() = ...;
+/// std::get<Msg::FieldIdx_name2>(msg.fields()).value() = ...;
+/// std::get<Msg::FieldIdx_name3>(msg.fields()).value() = ...;
+/// \endcode
+/// \b NOTE, that access to message fields, gives an access to a <b>field
+/// abstruction</b> object, not the value of the field. To get the value, call
+/// to \b value() member function needs to be performed. Please refer to
+/// \ref main_page_fields section below for more details on field classes and
+/// their interfaces.
+/// \section main_page_handling Handling the Message
+/// The \ref main_page_interface_dispatch section above described a way
+/// on how to allow polymorphic dispatch of the message to appropriate handling
+/// object. The class of the handling object is passed as a template
+/// parameter to \b comms::option::Handler option. This class is expected to define
+/// \b handle() member function for every function it is expected to handle.
+///
+/// As an example, let's assume the protocol library defines \b Msg1, \b Msg2,
+/// \b Msg3, ... message classes.
+/// \code
+/// // Common interface class for all the messages
+/// using MyInterface = sbe_example::Message<...>;
+///
+/// class MyHandler
+/// {
+/// public:
+///     void handle(Msg1& msg);
+///     void handle(Msg2& msg);
+///     void handle(Msg3& msg);
+///
+///     // Default handling function
+///     void handle(MyInterface& msg);
+/// };
+/// \endcode
+/// Note the existence of <b>handle(MyInterface& msg)</b> member function. It
+/// is required if not all messages are covered in other handling functions. If
+/// the exact match to message type is missing, the compiler will generate code
+/// for invocation of this default handling function.
+///
+/// The handling itself can be polymorphic:
+/// \code
+/// class MyHandler
+/// {
+/// public:
+///     virtual void handle(Msg1& msg) = 0;
+///     virtual void handle(Msg2& msg) = 0;
+///     virtual void handle(Msg3& msg) = 0;
+///     virtual void handle(MyInterface& msg) = 0;
+/// };
+///
+/// class Handler1 : public MyHandler
+/// {
+/// public:
+///     virtual void handle(Msg1& msg) override;
+///     virtual void handle(Msg2& msg) override;
+///     ...
+/// };
+///
+/// class Handler2 : public MyHandler
+/// {
+/// public:
+///     virtual void handle(Msg1& msg) override;
+///     virtual void handle(Msg2& msg) override;
+///     ...
+/// };
+///
+/// Handler1 handler1;
+/// Handler2 handler2;
+/// std::unique_ptr<MyInterface> msg(new Msg1); // allocated message object
+/// msg->dispatch(handler1); // Dispatches to handler1
+/// msg->dispatch(handler2); // Dispatches to handler2
+/// \endcode
+/// The handling functions may return a value. In order to support a return
+/// of the same value from the \b dispatch() member functions of the
+/// message object (see \ref main_page_interface_dispatch), the handler class
+/// is expected define \b RetType inner type, which defines a type returned
+/// by all the \b handle() member functions:
+/// \code
+/// class MyHandler:
+/// {
+/// public:
+///     // Return type of the handling functions
+///     using RetType = bool;
+///
+///     // Handling functions
+///     RetType handle(Msg1& msg);
+///     RetType handle(Msg2& msg);
+///     ...
+///     RetType handle(MyInterface& msg);
+/// };
+/// \endcode
+/// In this case the \b sbe_example::Message::dispatch() member function will return
+/// a value of the same type:
+/// \code
+/// bool result = msg->dispatch(handler);
+/// \endcode
+/// The \b COMMS library provides a helper \b comms::GenericHandler class,
+/// which can be used for easier defined of the custom handler one. The
+/// \b comms::GenericHandler receives 3 template parameters. The first one
+/// is common interface class for all the messages, second is all the message
+/// types to handle bundled in \b std::tuple, and the third is optional one
+/// to specify a return type of the handling functions (defaults to \b void).
+/// The \b comms::GenericHandler class automatically generates \b virtual
+/// handling function for every message type in the tuple as well as a defult
+/// one for the interface class. The body of every handling function upcasts
+/// the message type to the common interface one and invokes the "default"
+/// handling function, which does nothing. The custom handling class can extend
+/// the \b comms::GenericHandler and override the provides behaviour:
+/// \code
+/// class MyHandler : public comms::GenericHandler<MyInterface, sbe_example::AllMessages<MyInterface> >
+/// {
+/// public:
+///     virtual void handle(Msg1& msg) override
+///     {
+///         std::cout << "Msg1 is received" << std::endl;
+///     }
+///
+///     virtual void handle(MyInterface& msg) override
+///     {
+///         std::cout << "Unexpected message: " << msg.getId() << std::endl;
+///     }
+/// };
+/// \endcode
+/// Note, that the messages in the provided tuple must be sorted according to
+/// their numeric IDs. This library defines \ref sbe_example::AllMessages type which bundles
+/// all the messages of the protocol. Please use it for reference.
+///
+/// For more details, it is highly recommended to read <b>Handling Messages Tutorial</b>
+/// page of the \b COMMS library documentation.
+///
+/// \section main_page_fields Fields
+/// This tutorial uses term @b field for every element residing in \b \<types\>
+/// and \b \<message\> XML element of the \b SBE schema. In other words every
+/// \b \<type\>, \b \<composite\>, \b \<enum\>, \b \<set\>, \b \<field\>, \b \<group\>, and \b \<data\>
+/// is a \b field.
+///
+/// All the fields (types) defined under common \<types\> XML tag implemented
+/// in separate header file and reside in \ref sbe_example::field namespace.
+/// Every field defined under \<message\> XML tag is defined in the same
+/// file with its message class definition inside the structure starting with
+/// the message class name, but having the \b *Fields suffix (for example \ref sbe_example::message::CarFields).
+///
+/// Every such field is implemented by aliasing or extending appropriate
+/// classes from \b comms::field namespace (provided by the \b COMMS library).
+/// It is recommended to read the <b>Fields Tutorial</b> page from the \b COMMS
+/// library documentation for better understanding.
+///
+/// Every field class is an abstraction around a storage value. Every such
+/// field defines similar interface, which makes template meta-programming
+/// to be relatively easy task.
+/// \code
+/// class SomeField
+/// {
+/// public:
+///     // Value storage type
+///     using ValueType = ...;
+///
+///     // Access to stored value
+///     ValueType& value();
+///     const ValueType& value() const;
+///
+///     // Read with any iterator
+///     template <typename TIter>
+///     comms::ErrorStatus read(TIter& iter, std::size_t len);
+///
+///     // Write with any iterator
+///     template <typename TIter>
+///     comms::ErrorStatus write(TIter& iter, std::size_t len);
+///
+///     // Serialisation length retrieval
+///     std::size_t length() const
+///
+///     // Minimal serialisation length
+///     static constexpr std::size_t minLength();
+///
+///     // Maximal serialisation length
+///     static constexpr std::size_t maxLength();
+///
+///     // Value validity check
+///     vool valid() const;
+/// };
+/// \endcode
+/// Every optional field (with \b presence="optional" attribute in SBE schema)
+/// also adds the following extra functions:
+/// \code
+/// class SomeOptionalField
+/// {
+/// public:
+///     // Check if value is null
+///     bool isNull() const;
+///
+///     // Set value to null
+///     void setNull();
+/// };
+/// \endcode
+/// Let's cover all the available fields one by one...
+///
+/// \subsection main_page_fields_type \<type\>
+/// The \b \<type\> elements can be integral values, floating point values,
+/// fixed length strings, and fixed length lists.
+///
+/// \subsubsection main_page_fields_type_int Integral Value Fields
+/// Usually look like this
+/// \code
+/// <type name="someName" primitiveType="uint16" />
+/// \endcode
+/// Such fields are implemented by extending the \b comms::field::IntValue
+/// class from \b COMMS library.
+/// \code
+/// template <typename... TOpt>
+/// class someName : public
+///     comms::field::IntValue<
+///         FieldBase,
+///         std::uint16_t,
+///         TOpt...,
+///         comms::option::ValidNumValueRange<0, 65534L>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// Note, that \b primitiveType attribute value is mapped one-to-one with the
+/// value storage type passed to \b comms::field::IntValue
+/// | pritimiteType | Value Storage Type |
+/// |:-------------:|:------------------:|
+/// | char          | char               |
+/// | int8          | std::int8_t        |
+/// | uint8         | std::uint8_t       |
+/// | int16         | std::int16_t       |
+/// | uint16        | std::uint16_t      |
+/// | int32         | std::int32_t       |
+/// | uint32        | std::uint32_t      |
+/// | int64         | std::int64_t       |
+/// | uint64        | std::uint64_t      |
+///
+/// Integral values may have a valid range of values specified
+/// \code
+/// <type name="someName" primitiveType="int16" minValue="-500" maxValue="1000" />
+/// \endcode
+/// Such fields use \b comms::option::ValidNumValueRange option to limit the
+/// range of valid values. As the result, a call to \b valid() member function
+/// of the field will check that the value in the specified range
+/// class from \b COMMS library.
+/// \code
+/// template <typename... TOpt>
+/// class someName : public
+///     comms::field::IntValue<
+///         FieldBase,
+///         std::int16_t,
+///         TOpt...,
+///         comms::option::ValidNumValueRange<-500, 1000>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// When such integral value field is constructed, the inner value is initialized
+/// to \b 0. However, if the valid values range does not include \b 0, then
+/// the inner value will be initialised to a closest to \b 0, but still valid
+/// one. For example
+/// \code
+/// <type name="someName" primitiveType="uint16" minValue="1000" maxValue="2000" />
+/// \endcode
+/// will produce the following code
+/// \code
+/// template <typename... TOpt>
+/// class someName : public
+///     comms::field::IntValue<
+///         FieldBase,
+///         std::uint16_t,
+///         TOpt...,
+///         comms::option::ValidNumValueRange<1000, 2000>,
+///         comms::option::DefaultNumValue<1000> // Sets the default value on construction
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// Optional fields are initialised to their \b nullValue.
+/// \code
+/// <type name="someName" primitiveType="uint16" presence="optional" />
+/// \endcode
+/// The field definition will be
+/// \code
+/// template <typename... TOpt>
+/// class someName : public
+///     comms::field::IntValue<
+///         ...
+///         comms::option::DefaultNumValue<65535L>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+///
+/// \subsubsection main_page_fields_type_float Floating Point Value Fields
+/// Usually look like this
+/// \code
+/// <type name="someName" primitiveType="float" />
+/// \endcode
+/// Such fields are implemented by extending the \b comms::field::FloatValue
+/// \code
+/// class from \b COMMS library
+/// template <typename... TOpt>
+/// class someName : public
+///     comms::field::FloatValue<
+///         FieldBase,
+///         float,
+///         TOpt...
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// The values of all optional floating point fields are initialised to \b NaN.
+/// For example the field
+/// \code
+/// <type name="someName" primitiveType="float" present="optional"/>
+/// \endcode
+/// will have the following code executed correctly:
+/// \code
+/// sbe_example::field::someName<> field;
+/// assert(field.isNull());
+/// \endcode
+///
+/// \subsubsection main_page_fields_type_string Fixed Length String Fields
+/// All the types with \b primitiveType="char" and \b length attribute
+/// greater than \b are considered to be fixed length strings.
+/// For example:
+/// \code
+/// <type name="Str" primitiveType="char" length="4" />
+/// \endcode
+/// Such fields are implemented by extending the \b comms::field::String
+/// class from the \b COMMS library.
+/// \code
+/// template <typename... TOpt>
+/// class Str : public
+///     comms::field::String<
+///         FieldBase,
+///         comms::option::SequenceFixedSize<4>,
+///         TOpt...
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// \b NOTE, that by default inner value storage type of \b comms::field::String
+/// class is \b std::string.
+/// \code
+/// sbe_example::field::Str<> field;
+/// std::string& fieldValue = field.value();
+/// \endcode
+/// This can be changed by passing some extra options
+/// from \b comms::option namespace to the field class definition. Please
+/// refer to \ref main_page_customization section below for more details.
+///
+/// Also \b note, that usage of \b comms::option::SequenceFixedSize option
+/// above, just guarantees that field will be serialised specified number of bytes.
+/// If the size of the inner value is less than expected, the \b write() function
+/// will write necessary amount of zeros after the value has been written. If
+/// size of the string exceeds the necessary amount, it will be truncated.
+/// The inner string value is not resized upon construction:
+/// \code
+/// sbe_example::field::Str<> field;
+/// std::string& fieldValue = field.value();
+/// assert(fieldValue.empty());
+/// \endcode
+/// If field has \b primitiveType="int8" or \b primitiveType="uint8"
+/// attribute, but also defining non-empty \b characterEncoding attribute, then
+/// such field is also implemented by extending \b comms::field::String.
+///
+/// \subsubsection main_page_fields_type_list Fixed Length List Fields
+/// The \ref main_page_fields_type_int and \ref main_page_fields_type_float
+/// in the SBE schema may also define \b length attribute with value greater
+/// than \b 1. In such case the field is defined using two different classes.
+/// The first one is definition of the list element, which appends \b *Element
+/// suffix to its name. The second class is a definition of the list itself
+/// by extending \b comms::field::ArrayList. For example
+/// \code
+/// <type name="someName" primitiveType="uint16" length="4" />
+/// \endcode
+/// The generated code will look like this:
+/// \code
+/// template <typename... TOpt>
+/// class someNameElement : public
+///     comms::field::IntValue<
+///         FieldBase,
+///         std::uint16_t,
+///         TOpt...,
+///         comms::option::ValidNumValueRange<0, 65534L>
+///     >
+/// {
+///     ...
+/// };
+///
+/// template <typename... TOpt>
+/// class someName : public
+///     comms::field::ArrayList<
+///         FieldBase,
+///         someNameElement<>,
+///         TOpt...,
+///         comms::option::SequenceFixedSize<4>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// \b NOTE, that by default inner value storage type of \b comms::field::ArrayList
+/// class is \b std::vector.
+/// \code
+/// sbe_example::field::someName<> field;
+/// std::vector<someNameElement<> >& fieldValue = field.value();
+/// \endcode
+/// This can be changed by passing some extra options from \b comms::option
+/// namespace to the field class definition. Please refer to
+/// \ref main_page_customization section below for more details.
+///
+/// Also \b note, that inner storage value of the \b comms::field::ArrayList
+/// is a vector of <b>other fields</b>. Let's assume the vector is populated with
+/// values, so access to the first value will look like this:
+/// \code
+/// void processField(const sbe_example::field::someName<>& field)
+/// {
+///     auto& fieldValue = field.value(); // Access to the vector of element fields
+///     auto& firstElement = innerVector[0]; // The first element is a someNameElement<>
+///     std::uint16_t firstElementValue = firstElement.value(); // Access the actual value
+/// }
+/// \endcode
+/// One more thing to \b note, is that effect of \b comms::option::SequenceFixedSize
+/// option is similar to one described in \ref main_page_fields_type_string avove.
+/// It just insures appropriate number of elements to be written when field is
+/// serialised. It does \b NOT resize the vector to appropriate length upon field
+/// construction.
+/// \code
+/// sbe_example::field::someName<> field;
+/// assert(field.value().empty());
+/// \endcode
+/// All the stated above is true for the list fields when serialisation length
+/// of single element is <b>at least</b> two bytes. If \b primitiveType
+/// is specified to be \b int8 or \b uint8. It is considered to be a list
+/// of raw data when serialisation endian does not matter. In this case the
+/// there is no class that defines \b element of the list.
+/// \code
+/// <type name="someName" primitiveType="uint8" length="4" />
+/// \endcode
+/// In such case the generated code will look like this:
+/// \code
+/// template <typename... TOpt>
+/// class someName : public
+///     comms::field::ArrayList<
+///         FieldBase,
+///         std::uint8_t,
+///         TOpt...,
+///         comms::option::SequenceFixedSize<4>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// The access to the first element of such list can look like this:
+/// \code
+/// void processField(const sbe_example::field::someName<>& field)
+/// {
+///     std::vector<std::uint8_t>& fieldValue = field.value();
+///     std::uint8_t firstValue = fieldValue[0];
+/// }
+/// \endcode
+///
+/// \subsection main_page_fields_enum \<enum\>
+/// The enum fields are implemented by extending the \b comms::field::EnumValue
+/// from the \b COMMS library.
+///
+/// Let's define the following enum as an example:
+/// \code
+/// <enum name="SomeEnum" encodingType="uint8">
+///     <validValue name="Val1">0</validValue>
+///     <validValue name="Val2">1</validValue>
+/// </enum>
+/// \endcode
+/// First, the generated code defines enum class with underlying type
+/// matching the specified \b encodingType. The name of the enum class
+/// is the same as the field name, but with \b *Val suffix.
+/// \code
+/// enum class SomeEnumVal : std::uint8_t
+/// {
+///     Val1 = static_cast<std::uint8_t>(0),
+///     Val2 = static_cast<std::uint8_t>(1)
+/// };
+/// \endcode
+/// Then after the enum definition comes the actual field definition class
+/// \code
+/// template <typename... TOpt>
+/// class SomeEnum : public
+///     comms::field::EnumValue<
+///         FieldBase,
+///         SomeEnumVal,
+///         TOpt...,
+///         comms::option::ValidNumValueRange<0, 1>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// Accessing the inner value may look like this:
+/// \code
+/// sbe_example::field::SomeEnum<> field;
+/// SomeEnumVal& fieldValue = field.value();
+/// fieldValue = sbe_example::field::SomeEnumVal::Val2;
+/// \endcode
+/// Just like with \ref main_page_fields_type_int, the inner value is initialised
+/// to \b 0 upon construction. However, if \b 0 is not a valid 0, the field
+/// is automatically initialised to the closest to \0 one. For example:
+/// \code
+/// <enum name="SomeOtherEnum" encodingType="int32">
+///     <validValue name="Val1">78900</validValue>
+///     <validValue name="Val2">900000</validValue>
+/// </enum>
+/// \endcode
+/// Such field definition will looke like this:
+/// \code
+/// template <typename... TOpt>
+/// class SomeOtherEnum : public
+///     comms::field::EnumValue<
+///         FieldBase,
+///         SomeOtherEnumVal,
+///         TOpt...,
+///         comms::option::DefaultNumValue<78900L>,
+///         comms::option::ValidNumValue<78900L>,
+///         comms::option::ValidNumValue<900000L>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+///
+/// \subsection main_page_fields_set \<set\>
+/// The \b set fields are implemented by extending the \b comms::field::BitmaskValue
+/// from the \b COMMS library.
+///
+/// Let's define the following set as an example:
+/// \code
+/// <set name="someSet" encodingType="uint8">
+///     <choice name="bit0">0</choice>
+///     <choice name="bit1">1</choice>
+///     <choice name="bit5">5</choice>
+///     <choice name="bit7">7</choice>
+/// </set>
+/// \endcode
+/// The generated code looks like this.
+/// \code
+/// template <typename... TOpt>
+/// class someSet : public
+///     comms::field::BitmaskValue<
+///         FieldBase,
+///         TOpt...,
+///         comms::option::FixedLength<1>,
+///         comms::option::BitmaskReservedBits<0x5c>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// The \b encodingType attribute of the field definition is analysed by the
+/// \b sbe2comms compiler to specify the serialisation length of the field
+/// using \b comms::option::FixedLength. The \b COMMS library in turn, analyses
+/// requested serialisation length and uses appropriate \b unsigned type for
+/// storage (\b std::uint8_t in this case). The list of provided choices is
+/// analysed and usage of \b comms::option::BitmaskReservedBits option is
+/// generated to specify the unused (reserved) bits. If any of these bits is set,
+/// the call to \b valid() member function of the field will return \b false.
+///
+/// A call to \b value() member function will give an access to the value storage
+/// which can be updated directly.
+/// \code
+/// sbe_example::field::someSet<> field;
+/// field.value() = 0x8001; // set bit7 and bit0
+/// \endcode
+/// The \b comms::field::BitmaskValue class from the \b COMMS library defines
+/// following additional convenience API functions to set/get a single bit value.
+/// \code
+/// bool getBitValue(unsigned bitIdx) const;
+/// void setBitValue(unsigned bitIdx, bool value);
+/// \endcode
+///
+/// Setting bit0 and bit7 may look like this:
+/// \code
+/// sbe_example::field::someSet<> field; // All bits are initialised to false
+/// field.setBitValue(0, true);
+/// field.setBitValue(7, true);
+/// \endcode
+/// \b NOTE, that when default constructed the inner storage value is initialised
+/// to \b 0, i.e. all the bits are cleared.
+/// The \b COMMS library provides \b COMMS_BITMASK_BITS() and \b
+/// COMMS_BITMASK_BITS_ACCESS() macros to generate convenience enum and
+/// bit access functions. The \b sbe2comms compiler adds usage of these
+/// macros to the generated class:
+/// \code
+/// template <typename... TOpt>
+/// class someSet : public
+///     comms::field::BitmaskValue<...>
+/// {
+/// public:
+///     // Provide names for internal bits.
+///     COMMS_BITMASK_BITS(
+///         bit0=0,
+///         bit1=1,
+///         bit5=5,
+///         bit7=7
+///     );
+///
+///     // Provide convenience access functions for internal bits.
+///     COMMS_BITMASK_BITS_ACCESS(
+///         bit0,
+///         bit1,
+///         bit5,
+///         bit7
+///     );
+///
+///     ...
+/// };
+/// \endcode
+/// The \b COMMS_BITMASK_BITS() macro generates \b BitIdx enum.
+/// \code
+/// template <typename... TOpt>
+/// class someSet : public
+///     comms::field::BitmaskValue<...>
+/// {
+/// public:
+///     enum BitIdx
+///     {
+///         BitIdx_bit0=0,
+///         BitIdx_bit1=1,
+///         BitIdx_bit5=5,
+///         BitIdx_bit7=7,
+///         BitIdx_numOfValues
+///     };
+///
+///     ...
+/// };
+/// \endcode
+/// And the \b COMMS_BITMASK_BITS_ACCESS() macro generates convenience
+/// access functions for all the bits
+/// \code
+/// template <typename... TOpt>
+/// class someSet : public
+///     comms::field::BitmaskValue<...>
+/// {
+///     using Base = ...;
+/// public:
+///
+///     bool getBitValue_bit0() const
+///     {
+///         return Base::getBitValue(BitIdx_bit0);
+///     }
+///
+///     void setBitValue_bit0(bool value)
+///     {
+///         Base::setBitValue(BitIdx_bit0, value);
+///     }
+///
+///     ... // And so on for all other bits
+/// };
+/// \endcode
+/// If the specified bits start from bit \b 0 and go up without interruption,
+/// then \b sbe2comms compiler chooses to use single \b COMMS_BITMASK_BITS_SEQ()
+/// macro with the same effect.
+///
+/// \subsection main_page_fields_composite \<composite\>
+/// The \b composite fields are implemented by extending the \b comms::field::Bundle
+/// class from the \b COMMS library.
+///
+/// Let's define the following composite as an example:
+/// \code
+/// <composite name="someComposite">
+///     <type name="mem1" primitiveType="uint8" />
+///     <type name="mem2" primitiveType="uint8" />
+/// </composite>
+/// \endcode
+/// Preceding the definition of the \b composite field cass, there are
+/// its member fields, defined within a struct with the same name but with
+/// \b *Members suffix.
+/// \code
+/// //Scope for all the members of the "someComposite" field.
+/// struct someCompositeMembers
+/// {
+///     // Definition of "mem1" field.
+///     template <typename... TOpt>
+///     class mem1 : public comms::field::IntValue<...> { ... };
+///
+///     // Definition of "mem2" field.
+///     template <typename... TOpt>
+///     class mem2 : public comms::field::IntValue<...> { ... };
+///
+///     // Bundling all the defined member types into a single std::tuple.
+///     template<
+///         typename TOpt_mem1 = comms::option::EmptyOption,
+///         typename TOpt_mem2 = comms::option::EmptyOption
+///     >
+///     using All = std::tuple<
+///         mem1<TOpt_mem1>,
+///         mem2<TOpt_mem2>
+///     >;
+/// };
+/// \endcode
+/// Note the existence of \b All type at the end. It bundles all the
+/// member fields into \b std::tuple, which is used in the following
+/// definition of the \b composite field itself
+/// \code
+/// template<
+///     typename TOpt_mem1 = comms::option::EmptyOption,
+///     typename TOpt_mem2 = comms::option::EmptyOption
+/// >
+/// class someComposite : public
+///     comms::field::Bundle<
+///         FieldBase,
+///         someCompositeMembers::All<
+///             TOpt_mem1,
+///             TOpt_mem2
+///         >
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// A call to \b value() member function of \b comms::field::Bundle
+/// provides an access to the <b>tuple of member fields</b>
+/// \code
+/// sbe_example::field::someComposite<> field;
+/// sbe_example::field::someCompositeMembers::All<>& memberFields = field.value();
+/// sbe_example::field::someCompositeMembers::mem1<>& mem1Field = std::get<0>(memberFields);
+/// sbe_example::field::someCompositeMembers::mem2<>& mem2Field = std::get<1>(memberFields);
+/// \endcode
+/// The \b COMMS library provides \b COMMS_FIELD_MEMBERS_ACCESS() macro to
+/// generate convenience enum and members access functions. The \b sbe2comms
+/// compiler adds usage of it to the generated class:
+/// \code
+/// template<...>
+/// class someComposite : public comms::field::Bundle<...>
+/// {
+/// public:
+///     COMMS_FIELD_MEMBERS_ACCESS(mem1, mem2);
+///     ...
+/// };
+/// \endcode
+/// It is equivalent to having the following enum and access functions defined
+/// \code
+/// template<...>
+/// class someComposite : public comms::field::Bundle<...>
+/// {
+///     using Base = ...;
+/// public:
+///     enum FieldIdx
+///     {
+///         FieldIdx_mem1,
+///         FieldIdx_mem2,
+///         FieldIdx_numOfValues
+///     };
+///
+///     // Access to first member
+///     decltype(auto) field_mem1()
+///     {
+///         return std::get<FieldIdx_mem1>(Base::value());
+///     }
+///
+///     // Const access to first member
+///     decltype(auto) field_mem1()  const
+///     {
+///         return std::get<FieldIdx_mem1>(Base::value());
+///     }
+///
+///     ... // Similar for mem2
+/// };
+/// \endcode
+/// Please pay attention that the  members are <b>field abstractions</b>
+/// themselves, which will require a call to their \b value() member
+/// function to get an access to their stored values.
+/// \code
+/// sbe_example::field::someComposite<> field;
+/// std::uint8_t mem1Value = field.field_mem1().value();
+/// std::uint8_t mem2Value = field.field_mem2().value();
+/// \endcode
+/// According to SBE schema specification, the \b composite field is
+/// considered to be \b optional if its first member field is \b optional and
+/// is considered to have \b null value if its first member field has
+/// \b null value. In such case the \b sbe2comms compiler also generates
+/// \b isNull() and \b setNull() member functions that redirect the request
+/// to the first member field.
+///
+/// Sometimes a \b composite type may describe a string or data list, when
+/// referenced by a \b data field. If this is the case, the \b composite
+/// field is implemented by extending \b comms::field::String or
+/// \b comms::field::ArrayList, similar to \ref main_page_fields_type_string
+/// and \ref main_page_fields_type_list, but without usage of
+/// \b comms::option::SequenceFixedSize option.
+///
+/// \subsection main_page_fields_ref \<ref\>
+/// Every \b ref member of the \b \<composite\> field
+/// is implemented as simple alias with \b using C++ statement.
+///
+/// \subsection main_page_fields_field \<field\>
+/// Usually the \b \<field\> definition will be an alias to some field
+/// defined within \b \<types\>. In this case the definition of the
+/// relevant field will be an alias to the field definition from the
+/// sbe_example::field namespace. However, using built-in types is also supported.
+/// \code
+/// <field name="someField" type="uint8" />
+/// \endcode
+/// In this case the alias will be to appropriate type from the
+/// sbe_example::sbe2comms namespace.
+///
+/// Sometimes a \b \<field\> extends a functionality defined by the referenced
+/// type. For example, becomes optional when the referenced \b \<type\> is
+/// not. In this case the field class will be implemented by inheritance and
+/// required \b isNull() and \b setNull() functions will be added.
+///
+/// \subsection main_page_fields_group \<group\>
+/// Let's take as an example the following \b group definition
+/// \code
+/// <group name="someGroup" id="11">
+///     <field name="someField" id="12" type="uint8"/>
+///     <data name="someData" id="13" type="varStringEncoding"/>
+/// </group>
+/// \endcode
+/// It is defined in multiple stages. First, all the field members are defined
+/// in a struct having the same name as \b group field, but with
+/// \b *Members suffix.
+/// \code
+/// // Scope for all the members of the "someGroup" field.
+/// struct someGroupMembers
+/// {
+///     // Definition of "someField" member field.
+///     using someField = sbe_example::sbe2comms::uint8<...>;
+///
+///     // Definition of "someData" member field.
+///     using someData = field::varStringEncoding<...>;
+///
+///     // Bundling all the defined member fields into a single std::tuple.
+///     using All = std::tuple<
+///         someField,
+///         someData
+///     >;
+/// };
+/// \endcode
+/// Then a list element is defined as \b comms::field::Bundle, similar to
+/// definition of \b composite field
+/// \code
+/// // Element of someGroup list.
+/// class someGroupElement : public
+///     comms::field::Bundle<
+///         field::FieldBase,
+///         typename someGroupMembers::All
+///     >
+/// {
+/// public:
+///     // Allow access to internal fields.
+///     COMMS_FIELD_MEMBERS_ACCESS(someField, someData);
+/// };
+/// \endcode
+/// And finaly definition of the group list field itself. It is defined
+/// as alias to sbe_example::sbe2comms::groupList common definition. The latter implements the
+/// group list field by extending \b comms::field::ArrayList and overriding
+/// some member functions. Accessing the fields in the group list may look
+/// like this:
+/// \code
+/// void handleGroupList(someGroup& field)
+/// {
+///     auto& vectorOfElements = field.value(); // access the storage vector
+///     auto& firstElement = vectorOfElements[0]; // ref to someGroupElement
+///     auto& firstElemSomeField = firstElement.field_someField(); // ref to the member field
+///     auto& firstElemSomeData = firstElement.field_someData(); // ref to the member field
+///     std::uint8_t someFieldValue = firstElemSomeField.value(); // access the member field value
+///     std::string& someDataValue = firstElemSomeData.value(); // access the member field value
+/// \endcode
+/// By default the group list elements are stored in \b std::vector. It can be
+/// changed using options from \b comms::option namespace. Please refer
+/// to \ref main_page_customization section below for details.
+///
+/// \subsection main_page_fields_data \<data\>
+/// The \b data fields are implemented as an alias to previously defined
+/// \b composite, which is implemented by extending either
+/// \b comms::field::String (for string fields) or
+/// \b comms::field::ArrayList (for raw data lists).
+///
+/// \section main_page_pad Padding
+///
+/// The \b SBE schemas allow usage of \b offset and \b
+/// \b blockLength attribute, which may introduce padding
+/// between the fields. It is implemented as alias to sbe_example::sbe2comms::pad
+/// field, which is implemented as \b comms::field::ArrayList of raw data.
+///
+/// \section main_page_transport Transport Frame
+/// It is highly recommended to thorougly read the <b>Protocol Stack Tutorial</b> page
+/// from the \b COMMS library documentation in order to properly understand
+/// the examples in this section.
+///
+/// The \b SBE schema specification requires definition of message header
+/// (\ref sbe_example::field::messageHeader) which must precede the message payload. The
+/// \b sbe2comms compiler generates TransportFrame.h header file which defines
+/// \ref sbe_example::MessageHeaderFrame class. The latter can be used to read the raw
+/// data from the buffer, decode the message header, create appropriate message
+/// object, and then read the message contents.
+///
+/// The \ref sbe_example::MessageHeaderFrame class receives multiple template
+/// parameters. The first one is the common interface class for all
+/// \b input messages. It must be a variant of \ref sbe_example::Message. The second
+/// template parameter is \b std::tuple of all the \b input messages that
+/// need to be recongized and appropriate message object to be created.
+/// For example:
+/// \code
+/// using MyInterface = sbe_example::Message<...>;
+/// using MyTransport = sbe_example::MessageHeaderFrame<MyInterface, sbe_example::AllMessages<MyInterface> >;
+/// \endcode
+/// Note, that messages inside the provided \b std::tuple must be sorted
+/// according by their numeric IDs. There is \ref sbe_example::AllMessages type
+/// which is generated by the \b sbe2comms compiler. It can be used as reference.
+///
+/// The transport framing class defines the following types and member functions.
+/// \code
+/// class MyTransport
+/// {
+/// public:
+///     // Smart pointer to message object
+///     using MsgPtr = std::unique_ptr<...>;
+///
+///     // Read operation
+///     template <typename TMsgPtr, typename TIter>
+///     comms::ErrorStatus read(TMsgPtr& msg, TIter& iter, std::size_t len);
+///
+///     // Write operation
+///     template <typename TMsg, typename TIter>
+///     comms::ErrorStatus write(const TMsg& msg, TIter& iter, std::size_t len);
+///
+///     // Update operation
+///     template <typename TIter>
+///     comms::ErrorStatus update(TIter& iter, std::size_t len);
+/// };
+/// \endcode
+///
+/// \subsection main_page_transport_read Performing Read
+/// Let's assume we have a buffer that contains recently received raw bytes from
+/// I/O socket. Processing of these bytes may be implemented like this:
+/// \code
+/// MyTransport transport; // Transport stack defined above
+/// MyHandler handler; // Handler object
+///
+/// // Receives input buffer and its size and returns number of consumed bytes
+/// std::size_t processInput(const std::uint8_t* buf, std::size_t len)
+/// {
+///     std::size_t consumed = 0U;
+///     // Processing loop
+///     while (consumed < len) {
+///         // Smart pointer to the message object.
+///         MyTransport::MsgPtr msgPtr;
+///         // Type of the message interface class
+///         using MsgType = MyTransport::MsgPtr::element_type;
+///
+///         // Get the iterator for reading
+///         auto begIter = comms::readIteratorFor<MsgType>(buf + consumed);
+///         auto iter = begIter;
+///         // Do the read
+///         auto es = transport.read(msgPtr, iter, len - consumed);
+///         if (es == comms::ErrorStatus::NotEnoughData) {
+///             break; // Not enough data in the buffer, stop processing
+///         }
+///
+///         if (es == comms::ErrorStatus::ProtocolError) {
+///             // Something is not right with the data, remove one character and try again
+///             ++consumed;
+///             continue;
+///         }
+///         if (es == comms::ErrorStatus::Success) {
+///             assert(msgPtr); // If read is successful, msgPtr is expected to hold a valid pointer
+///             msgPtr->dispatch(handler); // Dispatch message for handling
+///         }
+///         // The iterator for reading has been advanced, update the difference
+///         consumed += std::distance(begIter, iter);
+///     }
+///     // Report how many bytes have been consumed from the buffer
+///     return consumed;
+/// }
+/// \endcode
+/// Please pay attention to the following details:
+/// \li The transport frame type defines type of the smart pointer that holds
+/// message object that, which allocation during read operation:
+/// \code
+/// ProtStack::MsgPtr msgPtr;
+/// \endcode
+/// \li The \b MyTransport::MsgPtr is a variant of \b unique_ptr. As the
+/// result the type of the interface can be retrieved using internal type \b element_type:
+/// \code
+/// using MsgType = ProtStack::MsgPtr::element_type;
+/// \endcode
+/// \li The transport framing is implemented using protocol layers from
+/// the \b COMMS library. The innermost layer (\b comms::protocol::MsgDataLayer)
+/// will invoke polymorphic \b read() member function of the allocated message
+/// (see \ref main_page_interface_read). It means that the iterator used for
+/// reading needs to be convertible to \b comms::Message::ReadIterator. It can
+/// be achieved by using \b comms::readIteratorFor() template function,
+/// which will initialise and return appropriate iterator type. Another possible
+/// way of allocating the iterator can be as following:
+/// \code
+/// MsgType::ReadIterator iter = buf + consumed;
+/// \endcode
+/// After the read operation is determined to be successful, the \b msgPtr
+/// holds dynamically allocated message object. The dispatching of the message
+/// for the handling is performed using polymorphic dispatch() call (see
+/// \ref main_page_interface_dispatch).
+///
+/// \subsection main_page_transport_write Performing Write
+/// The easiest way to implement write functionality is to use the ability of
+/// the message object to perform \ref main_page_interface_write
+/// \code
+/// MyTransport transport; // Protocol stack defined in one of previous sections
+/// void sendMessage(const MyInterface& msg)
+/// {
+///     std::vector<std::uint8_t> dataToSend; // Data to be sent via I/O link
+///     auto reqLen = transport.length(msg); // Number of bytes required to serialise the message;
+///     dataToSend.resize(reqLen);
+///     auto writeIter = comms::writeIteratorFor<MyInterface>(&dataToSend[0]);
+///     auto es = transport.write(msg, writeIter, dataToSend.size());
+///     if (es == comms::ErrorStatus::Success) {
+///         ... // Send contents of dataToSend via I/O link
+///     }
+/// }
+/// \endcode
+/// Please pay attention to the following details:
+/// \li The code above accesses the message via the interface class, which
+/// requires it to provide \ref main_page_interface_write and
+/// \ref main_page_interface_length.
+/// \li The innermost layer of transport framing (\b comms::protocol::MsgDataLayer)
+/// will invoke polymorphic write interface of the allocated message
+/// (see \b comms::Message::write()). It means that the iterator used for
+/// writing needs to be convertible to \b comms::Message::WriteIterator. It can
+/// be achieved by using \b comms::writeIteratorFor() template function, which will
+/// initialise and return appropriate iterator type. Another possible way of
+/// allocating the iterator can be as following:
+/// \code
+/// MyInterface::WriteIterator iter = buf + consumed;
+/// \endcode
+///
+/// \subsection main_page_transport_options Extra Protocol Options
+/// The third template parameter of the \ref sbe_example::MessageHeaderFrame class is
+/// protocol customisation options, which can be used to update the
+/// default generated behaviour of \ref sbe_example::field::messageHeader member fields.
+/// Please refer to \ref main_page_customization section below for more info.
+///
+/// \subsection main_page_transport_alloc Allocation of Message Object
+/// By default the message object is allocated dynamically and held by
+/// \b std::unique_ptr. However it is possible to modify this behaviour
+/// by passing extra options to internally used \b comms::MsgFactory class
+/// using fourth template parameter of \ref sbe_example::MessageHeaderFrame.
+/// If \b comms::option::InPlaceAllocation option is used, the spacial
+/// "in place" allocation area will be used, which can contain any
+/// message object specified in the described earlier tuple of \b input
+/// messages. In this case the inner \b MsgPtr type will still be
+/// \b std::unique_ptr, but with a custom deleter.
+///
+/// \subsection main_page_transport_generic_msg Generic Message
+/// The \b COMMS library supports a concept of a "Generic Message".
+/// It is a message object that does NOT care about its actual contents. It
+/// has a single field of raw data sequence (implemented as \b comms::field::ArrayList).
+/// Such message may be useful when implementing some kind of "bridge" or "firewall"
+/// application where there is a need to parse / block only selected number
+/// of messages, while the majority of them get forwarded to a different
+/// I/O channel unchanged.
+///
+/// As was stated earlier in \ref main_page_transport_alloc section above,
+/// the fourth template parameter is forwarded to inner \b comms::MsgFactory
+/// class as its default behaviour chaning options. It is possible to define
+/// a generic message class using \b comms::GenericMessage and pass it
+/// to \b comms::MsgFactory using \b comms::option::SupportGenericMessage
+/// option. In this case, if the provided \b tuple of supported input messages
+/// does not contain message any message with reported ID, the generic message
+/// object will be created and returned in \b read() operation.
+///
+/// \b NOTE, that it is possible to combine \b comms::option::InPlaceAllocation
+/// described earlier option with \b comms::option::SupportGenericMessage by
+/// bundling them together in \b std::tuple and passing the resulting type
+/// as a fourth template parameter to \ref sbe_example::MessageHeaderFrame.
+///
+/// \subsection main_page_transport_open Simple Open Framing Header
+/// The \b SBE specification also mentions <b>Simple Open Framing Header</b>.
+/// The \b sbe2comms compiler generates sbe_example::sbe2comms::openFramingHeader
+/// class that implements normative example provided in the spec. However,
+/// it is possible to specify custom \b \<composite\> type with two member
+/// types \b messageLength and \b encodingType in the protocol schema and
+/// ask \b sbe2comms compiler use it instead.
+///
+/// Similar to \ref sbe_example::MessageHeaderFrame, there is also \ref
+/// sbe_example::OpenFramingHeaderFrame, defined in the same TransportFrame.h file.
+/// It prefixes the required "Message Header" with "Simple Open Framing Header" and
+/// defines the same public interface.
+///
+/// There is one additional thing to pay attention to. It's the existence of
+/// \b messageLength field. If message interface
+/// class does \b NOT provide \ref main_page_interface_length, which can
+/// be used to calculate serialisation length up front, \b 0 is written to the buffer.
+/// After the rest of the message has been written, the size of the
+/// serialised data is calculated and the value inside the buffer is
+/// updated. However, there may be a case when such update is not possible.
+/// For example the \b WriteIterator used for message serialisation is
+/// \b std::back_insert_iterator on \b std::vector
+/// \code
+/// using MyInterface =
+///     sbe_example::Message<
+///         ...,
+///         comms::option::WriteIterator<std::back_insert_iterator<std::vector<std::uint8_t> > >
+///     >;
+/// \endcode
+/// In this case it's not possible to go back and update previously written
+/// dummy \b messageLength value. As the result, a call to \b write()
+/// member function of \ref sbe_example::OpenFramingHeaderFrame will return
+/// \b comms::ErrorStatus::UpdateRequired. It means that a <b> random access
+/// iterator</b> needs to be created and \b update() member function needs
+/// to be called to update the \b messageLength info.
+/// \code
+/// using MyTransport = sbe_example::OpenFramingHeaderFrame<MyInterface, mine::AllMessages<MyInterface> >;
+/// MyTransport transport;
+/// void sendMessage(const MyMessage& msg)
+/// {
+///     std::vector<std::uint8_t> dataToSend; // Data to be sent via I/O link
+///     auto writeIter = std::back_inserter(dataToSend);
+///     auto es = transport.write(msg, writeIter, dataToSend.max_size());
+///     if (es == comms::ErrorStatus::UpdateRequired) {
+///         // The messageLength could not be calculated right away,
+///         // create random-access iterator and update the written value
+///         auto* updateIter = &dataToSend[0];
+///         es = transport.update(updateIter, dataToSend.size());
+///     }
+///     if (es == comms::ErrorStatus::Success) {
+///         ... // Send contents of dataToSend via I/O link
+///     }
+/// }
+/// \endcode
+///
+/// \section main_page_msg_id Message ID
+/// The \b SBE schema defines IDs of the messages as numeric unsigned
+/// values. The \b sbe2comms compiler generates \ref sbe_example::MsgId enum
+/// for message identification purpose. The \b templateId member
+/// field of \ref sbe_example::field::messageHeader is used to carry message ID information.
+/// It is defined as simple integral value \b \<type\> element. However,
+/// the \b sbe2comms compiler changes it to be implemented as
+/// \b comms::field::EnumValue for more convenient usage.
+///
+/// Some protocols may define messages that carry other message ID information
+/// in their payload. In such case it is recommended to define external
+/// type for message IDs and make \b templateId member
+/// field of \ref sbe_example::field::messageHeader to be a \b \<ref\> to it.
+/// \code
+/// <type name="ExtTemplateId" primitiveType="uint16"/>
+/// <composite name="messageHeader">
+///     <type name="blockLength" primitiveType="uint16"/>
+///     <ref name="templateId" type="ExtTemplateId"/>
+///     <type name="schemaId" primitiveType="uint16"/>
+///     <type name="version" primitiveType="uint16"/>
+/// </composite>
+/// ...
+/// <message name="Msg1" id="1">
+///     <field name="otherMsgId" id="10" type="ExtTemplateId"/>
+/// </message>
+/// \endcode
+/// In this case the \b sbe2comms compiler will define a type referenced by
+/// \b templateId to extend \b comms::field::EnumValue
+/// \code
+/// template <typename... TOpt>
+/// class ExtTemplateId : public
+///     comms::field::EnumValue<
+///         FieldBase,
+///         sbe_example::MsgId,
+///         TOpt...,
+///         ...
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+///
+/// \section main_page_customization Customization
+/// The \b COMMS library is designed to provide some common default behaviour
+/// applicable to most existing binary communication protocols, but still
+/// allow its customisation relevant to the protocol being implemented and/or
+/// the platform, for which the application is being developed.
+///
+/// The \b SBE schema language may be not rich enough for some particular
+/// use cases or generated code may be too generic and some specific application
+/// may require a bit of fine tuning. The code generated by \b sbe2comms
+/// compiler allows such configuration using extra <b>protocol options</b>.
+/// Every message class from \ref sbe_example::message namespace receives a second
+/// template parameter, which defaults to \ref sbe_example::DefaultOptions from
+/// DefaultOptions.h header file. Please take a look inside. The inner
+/// scopes of various types a mapped one-to-one with scopes of fields
+/// in \ref sbe_example namespace. These inner types are passed as extra options
+/// to various fields. For example \ref sbe_example::DefaultOptions::field::messageHeaderMembers::version
+/// type is passed as extra options to \ref sbe_example::field::messageHeaderMembers::version
+/// field.
+///
+/// All the types inside \ref sbe_example::DefaultOptions are defined to be
+/// \b comms::option::EmptyOption, which does nothing. In order to modify
+/// the default behaviour of specific fields, new struct / class with similar
+/// inner structure needs to be defined with appropriate inner type values and
+/// passed as a template parameter instead of \ref sbe_example::DefaultOptions. The
+/// way is to inherit from \ref sbe_example::DefaultOptions and override types for
+/// selected number of fields. If multiple extra options need to be passed, just
+/// bundle them together in \b std::tuple.
+///
+/// As an example let's assume we develop some application that can understand
+/// only version \b 1 of the schema and should fail the read operation if
+/// the actual value is not as expected. Below is how custom protocol options
+/// will look like:
+/// \code
+/// struct MyOptions : public sbe_example::DefaultOptions
+/// {
+///     struct field : public sbe_example::DefaultOptions::field
+///     {
+///         struct messageHeaderMembers : public sbe_example::DefaultOptions::field::messageHeaderMembers
+///         {
+///             using version =
+///                 std::tuple<
+///                     comms::option::ValidNumValueOverride<1>,
+///                     comms::option::FailOnInvalid<comms::ErrorStatus::ProtocolError>
+///                 >;
+///         }
+///     }
+/// }
+/// \endcode
+/// Note the usage of \b comms::option::ValidNumValueOverride instead of
+/// \b comms::option::ValidNumValue. The latter would just add new value to
+/// the existing valid value ranges, while the former will \b override the
+/// default valid range used in the definition of \ref sbe_example::field::messageHeaderMembers::version.
+///
+/// Please read the documentation for all the classes in \b comms::field
+/// namespace from the \b COMMS library. Every such class lists the
+/// extension options it supports and the documentation of every option
+/// struct / type describes why and how to use it.
+///
+/// There are several useful options that are worth mentioning here as well.
+/// First of all, by default all fields implemented by extending
+/// \b comms::field::String or \b comms::field::ArrayList use
+/// \b std::string or \b std::vector respectively as inner storage
+/// type. Some embedded systems (especially bare-metal ones) may need
+/// to change that. The \b COMMS library defines \b comms::option::FixedSizeStorage<Len>
+/// option, which replaces usage of \b std::string or \b std::vector
+/// with \b comms::util::StaticString or \b comms::util::StaticVector.
+/// These storage classes expose the same interface as \b std::string or
+/// \b std::vector, but use uninitialised storage are (\b std::array) in
+/// their private data and don't throw exceptions. If the defined \b string
+/// or \b list field class are of fixed length, i.e. already using
+/// \b comms::option::SequenceFixedSize option (see \ref
+/// main_page_fields_type_string and \ref main_page_fields_type_list), then
+/// it is possible to use \b comms::option::SequenceFixedSizeUseFixedSizeStorage
+/// which will have the same effect, but does not require specifying of
+/// storage are size (it is already known).
+///
+/// If buffer of data outlives the message object, then usage of
+/// \b std::string / \b comms::util::StaticString or
+/// \b std::vector / \b comms::util::StaticVector
+/// for \b string and <b>raw data list</b> (list of raw bytes) fields may involve unnecessary
+/// copy of data from the buffer to inner storage of the fields. To help with
+/// such case \b COMMS library defines \b comms::option::OrigDataView option.
+/// It forces the inner storage types to be \b comms::util::StringView or
+/// \b comms::util::ArrayView, which store only pointers to original data.
+///
+/// If all of the mentioned above storage types are not good enough, it is also
+/// possible to use any external one using \b comms::option::CustomStorageType
+/// option. For example:
+/// \code
+/// struct MyOptions : public sbe_example::DefaultOptions
+/// {
+///     struct field : public sbe_example::DefaultOptions::field
+///     {
+///         using someList = comms::option::CustomStorageType<boost::circular_buffer<std::uint8_t> >;
+///     };
+/// };
+/// \endcode
+/// \b NOTE, that the custom storage type is expected to define the same
+/// public interface as \b std::string for \b string fields or
+/// \b std::vector for \b list fields.
+///
+/// There is one more customisation feature worth mentioning here. It's
+/// <b>value units</b> and <b>scaling ratio</b>. Let's assume our protocol
+/// (in one of the messages) reports a distance between two locations in
+/// \b 1/10 of the millimetres. The \b SBE schema language does NOT
+/// have means to specify units and the scaling ratio information.
+/// \code
+/// <type name="distance" primitiveType="uint32" description="Distance in 1/10 of mm"/>
+/// \endcode
+/// However, it is possible to specify this additional information using
+/// extra options from the COMMS library.
+/// \code
+/// struct MyOptions : public sbe_example::DefaultOptions
+/// {
+///     struct field : public sbe_example::DefaultOptions::field
+///     {
+///         using distance =
+///             std::tuple<
+///                 comms::option::ScalingRatio<1/10>,
+///                 comms::option::UnitsMillimeters
+///             >;
+///     };
+/// };
+/// \endcode
+/// Then when operating with the field object there is no need to
+/// know the actual units and scaling ratio of the serialised value. It's much
+/// easier to use the conversion functions provided by the \b COMMS library
+/// \code
+/// auto& distanceField = msg.field_distance(); // access to distance field
+///
+/// // get value operation
+/// double distanceInMeters = comms::units::getMeters<double>(distanceField);
+///
+/// // set value operation
+/// comms::units::setCentimeters(distanceField, 12.3);
+/// \endcode
+/// The \b COMMS library will check at compile time that conversion between
+/// units is a valid operation and will do all the necessary math. Please
+/// read the <b>Scaling Value</b> and <b>Value Units</b> sections in
+/// <b>Fields Tutorial </b> page  of the <b>COMMS</b> library documentation
+/// for more details.
+///
+/// \section main_page_reserved_names Reserved Names
+/// All the names of fields and messages from the \b SBE shema are taken
+/// "as-is" and become names of the relevant classes. If the chosen name
+/// turns out to be a C++ keyword, then \b _ (underscore) suffix is
+/// appended to the name of the class. The same update is performed if
+/// the name is the same as one of the generated namespaces (
+/// \ref sbe_example, \b message, \b field, \b sbe2comms) or namespaces and/or
+/// function names used by the \b COMMS library.
+/// Also generated padding fields (see \ref main_page_pad) will have
+/// \b padX_ (with \b _ suffix) format where \b X is a sequential
+/// number of the padding field.
+///
+

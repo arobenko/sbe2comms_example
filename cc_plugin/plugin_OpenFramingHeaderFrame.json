@@ -1,0 +1,7 @@
+{
+    "name" : "extension Protocol (Open Frame)",
+    "desc" : [
+        "extension Protocol with both message and simple open framing headers."
+    ],
+    "type" : "protocol"
+}

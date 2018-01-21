@@ -1,0 +1,7 @@
+{
+    "name" : "extension Protocol",
+    "desc" : [
+        "extension Protocol with message header only."
+    ],
+    "type" : "protocol"
+}
