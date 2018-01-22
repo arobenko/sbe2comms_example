@@ -124,7 +124,7 @@ public:
     ///     related to \b comms::field::Bundle class from COMMS library
     ///     for details.\n
     ///     The names are:
-    ///     \li \b length for \ref varDataEncodingMembers::length.
+    ///     \li \b length for \ref varDataEncodingMembers::length_.
     ///     \li \b varData for \ref varDataEncodingMembers::varData.
     COMMS_FIELD_MEMBERS_ACCESS(
         length,
