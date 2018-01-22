@@ -3,9 +3,9 @@
 #include <cassert>
 
 #include "cc_plugin/field.h"
-#include "sbe_example/sbe2comms/openFramingHeader.h"
+#include "extension/sbe2comms/openFramingHeader.h"
 
-namespace sbe_example
+namespace extension
 {
 
 namespace cc_plugin
@@ -63,5 +63,5 @@ const QVariantList& OpenFramingHeaderFrameTransportMessage::fieldsPropertiesImpl
 
 } // namespace cc_plugin
 
-} // namespace sbe_example
+} // namespace extension
 

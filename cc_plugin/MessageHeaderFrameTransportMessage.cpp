@@ -4,7 +4,7 @@
 
 #include "cc_plugin/field.h"
 
-namespace sbe_example
+namespace extension
 {
 
 namespace cc_plugin
@@ -42,5 +42,5 @@ const QVariantList& MessageHeaderFrameTransportMessage::fieldsPropertiesImpl() c
 
 } // namespace cc_plugin
 
-} // namespace sbe_example
+} // namespace extension
 

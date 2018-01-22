@@ -1,0 +1,12 @@
+/// \namespace extension
+/// \brief Main namespace for all classes / functions of this protocol library.
+
+/// \namespace extension::message
+/// \brief Namespace for all the messages defined in this protocol.
+
+/// \namespace extension::field
+/// \brief Namespace for all the stand alone fields defined in this protocol.
+
+/// \namespace extension::sbe2comms
+/// \brief Namespace for all implicitly defined (built-in) fields.
+

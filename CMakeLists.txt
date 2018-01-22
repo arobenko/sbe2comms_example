@@ -29,7 +29,7 @@ set (PLUGIN_INSTALL_DIR ${INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}/CommsChampion/plu
 set (DOC_INSTALL_DIR ${INSTALL_DIR}/doc)
 
 install (
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/sbe_example
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/extension
     DESTINATION ${INC_INSTALL_DIR}
 )
 

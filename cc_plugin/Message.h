@@ -1,16 +1,16 @@
 #pragma once
 
 #include "comms_champion/comms_champion.h"
-#include "sbe_example/Message.h"
+#include "extension/Message.h"
 
-namespace sbe_example
+namespace extension
 {
 
 namespace cc_plugin
 {
 
 template <typename... TOptions>
-class Message : public comms_champion::MessageBase<sbe_example::Message, TOptions...>
+class Message : public comms_champion::MessageBase<extension::Message, TOptions...>
 {
 protected:
     const QVariantList& extraTransportFieldsPropertiesImpl() const override
@@ -46,11 +46,11 @@ private:
         props.append(createFieldProps_blockLength());
         props.append(createFieldProps_version());
 
-        assert(props.size() == sbe_example::Message<>::TransportFieldIdx_numOfValues);
+        assert(props.size() == extension::Message<>::TransportFieldIdx_numOfValues);
         return props;
     }
 };
 } // namespace cc_plugin
 
-} // namespace sbe_example
+} // namespace extension
 

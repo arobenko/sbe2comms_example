@@ -3,7 +3,7 @@
 
 namespace cc = comms_champion;
 
-namespace sbe_example
+namespace extension
 {
 
 namespace cc_plugin
@@ -23,5 +23,5 @@ OpenFramingHeaderFramePlugin::~OpenFramingHeaderFramePlugin() = default;
 
 } // namespace cc_plugin
 
-} // namespace sbe_example
+} // namespace extension
 

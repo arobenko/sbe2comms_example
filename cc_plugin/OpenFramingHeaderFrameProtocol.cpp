@@ -5,7 +5,7 @@
 
 namespace cc = comms_champion;
 
-namespace sbe_example
+namespace extension
 {
 
 namespace cc_plugin
@@ -23,7 +23,7 @@ class ProtocolImpl : public
             cc_plugin::OpenFramingHeaderFrameTransportMessage
         >;
 public:
-    friend class sbe_example::cc_plugin::Protocol;
+    friend class extension::cc_plugin::Protocol;
 
     ProtocolImpl() = default;
     virtual ~ProtocolImpl() = default;
@@ -97,5 +97,5 @@ cc::MessagePtr Protocol::createExtraInfoMessageImpl()
 
 } // namespace cc_plugin
 
-} // namespace sbe_example
+} // namespace extension
 

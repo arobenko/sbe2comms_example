@@ -3,7 +3,7 @@
 #include <QtCore/QVariantMap>
 
 
-namespace sbe_example
+namespace extension
 {
 
 namespace cc_plugin
@@ -32,5 +32,5 @@ QVariantMap createProps_varStringEncoding(const char* fieldName, bool serialishe
 
 } // namespace cc_plugin
 
-} // namespace sbe_example
+} // namespace extension
 

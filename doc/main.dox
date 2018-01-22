@@ -11,19 +11,19 @@
 /// allowing the application being developed to configure polymorphic interfaces
 /// as well as data types for some critical fields.
 ///
-/// The basic interface class is defined to be \ref sbe_example::Message. It defines
-/// the protocol endian as well as internal message id type (\ref sbe_example::MsgId).
+/// The basic interface class is defined to be \ref extension::Message. It defines
+/// the protocol endian as well as internal message id type (\ref extension::MsgId).
 /// \code
-/// class sbe_example::Message
+/// class extension::Message
 /// {
 ///     // Define endian type tag
 ///     using Endian = comms::traits::endian::Little;
 ///
 ///     // Define type of the message ID
-///     using MsdIdType = sbe_example::MsgId;
+///     using MsdIdType = extension::MsgId;
 ///
 ///     // Define type of the message ID when used as function parameter
-///     using MsgIdParamType = sbe_example::MsgId;
+///     using MsgIdParamType = extension::MsgId;
 ///
 ///     // Set the blockLength value (used by transport framing)
 ///     void setBlockLength(std::size_t value);
@@ -48,7 +48,7 @@
 /// read iterator using \b comms::option::ReadIterator option.
 /// \code
 /// using MyInterface = 
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::ReadIterator<const std::uint8_t*>
 ///     >;
 /// \endcode
@@ -77,7 +77,7 @@
 /// write iterator using \b comms::option::WriteIterator option.
 /// \code
 /// using MyInterface =
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::WriteIterator<std::uint8_t*>
 ///     >;
 /// \endcode
@@ -103,11 +103,11 @@
 ///
 /// \subsection main_page_interface_length Polymorphic Serialisation Length Retrieval
 /// In order to introduce polymorphic serialisation length retrieval functionality, 
-/// pass \b comms::option::LengthInfoInterface option to the \ref sbe_example::Message
+/// pass \b comms::option::LengthInfoInterface option to the \ref extension::Message
 /// interface class.
 /// \code
 /// using MyInterface = 
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::LengthInfoInterface
 ///     >;
 /// \endcode
@@ -130,11 +130,11 @@
 ///
 /// \subsection main_page_interface_id Polymorphic Message ID Retrieval
 /// In order to introduce polymorphic message ID retrieval functionality,
-/// pass \b comms::option::IdInfoInterface option to the \ref sbe_example::Message
+/// pass \b comms::option::IdInfoInterface option to the \ref extension::Message
 /// interface class.
 /// \code
 /// using MyInterface =
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::IdInfoInterface
 ///     >;
 /// \endcode
@@ -159,11 +159,11 @@
 /// The SBE schemas allow limiting range of valid values for some fields.
 /// The message is considered to be valid if all of its fields are valid.
 /// In order to introduce polymorphic message validity check functionality, 
-/// pass \b comms::option::ValidCheckInterface option to the \ref sbe_example::Message
+/// pass \b comms::option::ValidCheckInterface option to the \ref extension::Message
 /// interface class.
 /// \code
 /// using MyInterface = 
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::ValidCheckInterface
 ///     >;
 /// \endcode
@@ -191,7 +191,7 @@
 /// of the handling object type.
 /// \code
 /// using MyInterface =
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::Handler<MyHandler>
 ///     >;
 /// \endcode
@@ -227,7 +227,7 @@
 /// option.
 /// \code
 /// using MyInterface =
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::RefreshInterface
 ///     >;
 /// \endcode
@@ -263,12 +263,12 @@
 /// \endcode
 ///
 /// \subsection main_page_interface_meta Meta-Programming
-/// The \b comms::Message class (extended by \ref sbe_example::Message) from the 
+/// The \b comms::Message class (extended by \ref extension::Message) from the 
 /// \b COMMS library defines multiple
 /// \b constexpr static functions to allow compile time analysis of
-/// the supported interface. The \ref sbe_example::Message class inherits all this functions
+/// the supported interface. The \ref extension::Message class inherits all this functions
 /// \code
-/// namespace sbe_example
+/// namespace extension
 /// {
 ///
 /// template <typename... TOpt>
@@ -301,7 +301,7 @@
 ///     static constexpr bool hasRefresh();
 /// };
 ///
-/// } // namespace sbe_example
+/// } // namespace extension
 /// \endcode
 /// These functions may be used at compile time to determine the supported
 /// interface if needed.
@@ -317,14 +317,14 @@
 /// \code
 /// // Interface for input messages
 /// using MyIntputMessage = 
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::ReadIterator<const std::uint8*>, // support for read
 ///         comms::option::Handler<MyHandler> // support for dispatch
 ///     >;
 ///
 /// // Interface for output messages
 /// using MyOutputMessage =
-///     sbe_example::Message<
+///     extension::Message<
 ///         comms::option::WriteIterator<std::uint8_t*>, // support for polymorphic write
 ///         comms::option::IdInfoInterface, // Support for polymorphic id retrieval
 ///         comms::option::LengthInfoInterface // Support for polymorphic output buffer length calculation
@@ -335,8 +335,8 @@
 /// section below for more details.
 ///
 /// \section main_page_protocol_messages Protocol Messages
-/// All the defined protocol message classes reside in \ref sbe_example::message namespace
-/// (include/sbe_example/message folder). Every message definition class receives
+/// All the defined protocol message classes reside in \ref extension::message namespace
+/// (include/extension/message folder). Every message definition class receives
 /// two template parameters. The first one is chosen common message interface
 /// class (see @ref main_page_interface section above). The second parameter is
 /// a struct of extra parameters to various fields which may be used to change
@@ -501,7 +501,7 @@
 /// \b Msg3, ... message classes.
 /// \code
 /// // Common interface class for all the messages
-/// using MyInterface = sbe_example::Message<...>;
+/// using MyInterface = extension::Message<...>;
 ///
 /// class MyHandler
 /// {
@@ -571,7 +571,7 @@
 ///     RetType handle(MyInterface& msg);
 /// };
 /// \endcode
-/// In this case the \b sbe_example::Message::dispatch() member function will return
+/// In this case the \b extension::Message::dispatch() member function will return
 /// a value of the same type:
 /// \code
 /// bool result = msg->dispatch(handler);
@@ -589,7 +589,7 @@
 /// handling function, which does nothing. The custom handling class can extend
 /// the \b comms::GenericHandler and override the provides behaviour:
 /// \code
-/// class MyHandler : public comms::GenericHandler<MyInterface, sbe_example::AllMessages<MyInterface> >
+/// class MyHandler : public comms::GenericHandler<MyInterface, extension::AllMessages<MyInterface> >
 /// {
 /// public:
 ///     virtual void handle(Msg1& msg) override
@@ -604,7 +604,7 @@
 /// };
 /// \endcode
 /// Note, that the messages in the provided tuple must be sorted according to
-/// their numeric IDs. This library defines \ref sbe_example::AllMessages type which bundles
+/// their numeric IDs. This library defines \ref extension::AllMessages type which bundles
 /// all the messages of the protocol. Please use it for reference.
 ///
 /// For more details, it is highly recommended to read <b>Handling Messages Tutorial</b>
@@ -617,10 +617,10 @@
 /// is a \b field.
 ///
 /// All the fields (types) defined under common \<types\> XML tag implemented
-/// in separate header file and reside in \ref sbe_example::field namespace.
+/// in separate header file and reside in \ref extension::field namespace.
 /// Every field defined under \<message\> XML tag is defined in the same
 /// file with its message class definition inside the structure starting with
-/// the message class name, but having the \b *Fields suffix (for example \ref sbe_example::message::CarFields).
+/// the message class name, but having the \b *Fields suffix (for example \ref extension::message::CarFields).
 ///
 /// Every such field is implemented by aliasing or extending appropriate
 /// classes from \b comms::field namespace (provided by the \b COMMS library).
@@ -801,7 +801,7 @@
 /// \endcode
 /// will have the following code executed correctly:
 /// \code
-/// sbe_example::field::someName<> field;
+/// extension::field::someName<> field;
 /// assert(field.isNull());
 /// \endcode
 ///
@@ -829,7 +829,7 @@
 /// \b NOTE, that by default inner value storage type of \b comms::field::String
 /// class is \b std::string.
 /// \code
-/// sbe_example::field::Str<> field;
+/// extension::field::Str<> field;
 /// std::string& fieldValue = field.value();
 /// \endcode
 /// This can be changed by passing some extra options
@@ -843,7 +843,7 @@
 /// size of the string exceeds the necessary amount, it will be truncated.
 /// The inner string value is not resized upon construction:
 /// \code
-/// sbe_example::field::Str<> field;
+/// extension::field::Str<> field;
 /// std::string& fieldValue = field.value();
 /// assert(fieldValue.empty());
 /// \endcode
@@ -890,7 +890,7 @@
 /// \b NOTE, that by default inner value storage type of \b comms::field::ArrayList
 /// class is \b std::vector.
 /// \code
-/// sbe_example::field::someName<> field;
+/// extension::field::someName<> field;
 /// std::vector<someNameElement<> >& fieldValue = field.value();
 /// \endcode
 /// This can be changed by passing some extra options from \b comms::option
@@ -901,7 +901,7 @@
 /// is a vector of <b>other fields</b>. Let's assume the vector is populated with
 /// values, so access to the first value will look like this:
 /// \code
-/// void processField(const sbe_example::field::someName<>& field)
+/// void processField(const extension::field::someName<>& field)
 /// {
 ///     auto& fieldValue = field.value(); // Access to the vector of element fields
 ///     auto& firstElement = innerVector[0]; // The first element is a someNameElement<>
@@ -914,7 +914,7 @@
 /// serialised. It does \b NOT resize the vector to appropriate length upon field
 /// construction.
 /// \code
-/// sbe_example::field::someName<> field;
+/// extension::field::someName<> field;
 /// assert(field.value().empty());
 /// \endcode
 /// All the stated above is true for the list fields when serialisation length
@@ -941,7 +941,7 @@
 /// \endcode
 /// The access to the first element of such list can look like this:
 /// \code
-/// void processField(const sbe_example::field::someName<>& field)
+/// void processField(const extension::field::someName<>& field)
 /// {
 ///     std::vector<std::uint8_t>& fieldValue = field.value();
 ///     std::uint8_t firstValue = fieldValue[0];
@@ -985,9 +985,9 @@
 /// \endcode
 /// Accessing the inner value may look like this:
 /// \code
-/// sbe_example::field::SomeEnum<> field;
+/// extension::field::SomeEnum<> field;
 /// SomeEnumVal& fieldValue = field.value();
-/// fieldValue = sbe_example::field::SomeEnumVal::Val2;
+/// fieldValue = extension::field::SomeEnumVal::Val2;
 /// \endcode
 /// Just like with \ref main_page_fields_type_int, the inner value is initialised
 /// to \b 0 upon construction. However, if \b 0 is not a valid 0, the field
@@ -1054,7 +1054,7 @@
 /// A call to \b value() member function will give an access to the value storage
 /// which can be updated directly.
 /// \code
-/// sbe_example::field::someSet<> field;
+/// extension::field::someSet<> field;
 /// field.value() = 0x8001; // set bit7 and bit0
 /// \endcode
 /// The \b comms::field::BitmaskValue class from the \b COMMS library defines
@@ -1066,7 +1066,7 @@
 ///
 /// Setting bit0 and bit7 may look like this:
 /// \code
-/// sbe_example::field::someSet<> field; // All bits are initialised to false
+/// extension::field::someSet<> field; // All bits are initialised to false
 /// field.setBitValue(0, true);
 /// field.setBitValue(7, true);
 /// \endcode
@@ -1207,10 +1207,10 @@
 /// A call to \b value() member function of \b comms::field::Bundle
 /// provides an access to the <b>tuple of member fields</b>
 /// \code
-/// sbe_example::field::someComposite<> field;
-/// sbe_example::field::someCompositeMembers::All<>& memberFields = field.value();
-/// sbe_example::field::someCompositeMembers::mem1<>& mem1Field = std::get<0>(memberFields);
-/// sbe_example::field::someCompositeMembers::mem2<>& mem2Field = std::get<1>(memberFields);
+/// extension::field::someComposite<> field;
+/// extension::field::someCompositeMembers::All<>& memberFields = field.value();
+/// extension::field::someCompositeMembers::mem1<>& mem1Field = std::get<0>(memberFields);
+/// extension::field::someCompositeMembers::mem2<>& mem2Field = std::get<1>(memberFields);
 /// \endcode
 /// The \b COMMS library provides \b COMMS_FIELD_MEMBERS_ACCESS() macro to
 /// generate convenience enum and members access functions. The \b sbe2comms
@@ -1257,7 +1257,7 @@
 /// themselves, which will require a call to their \b value() member
 /// function to get an access to their stored values.
 /// \code
-/// sbe_example::field::someComposite<> field;
+/// extension::field::someComposite<> field;
 /// std::uint8_t mem1Value = field.field_mem1().value();
 /// std::uint8_t mem2Value = field.field_mem2().value();
 /// \endcode
@@ -1283,12 +1283,12 @@
 /// Usually the \b \<field\> definition will be an alias to some field
 /// defined within \b \<types\>. In this case the definition of the
 /// relevant field will be an alias to the field definition from the
-/// sbe_example::field namespace. However, using built-in types is also supported.
+/// extension::field namespace. However, using built-in types is also supported.
 /// \code
 /// <field name="someField" type="uint8" />
 /// \endcode
 /// In this case the alias will be to appropriate type from the
-/// sbe_example::sbe2comms namespace.
+/// extension::sbe2comms namespace.
 ///
 /// Sometimes a \b \<field\> extends a functionality defined by the referenced
 /// type. For example, becomes optional when the referenced \b \<type\> is
@@ -1311,7 +1311,7 @@
 /// struct someGroupMembers
 /// {
 ///     // Definition of "someField" member field.
-///     using someField = sbe_example::sbe2comms::uint8<...>;
+///     using someField = extension::sbe2comms::uint8<...>;
 ///
 ///     // Definition of "someData" member field.
 ///     using someData = field::varStringEncoding<...>;
@@ -1339,7 +1339,7 @@
 /// };
 /// \endcode
 /// And finaly definition of the group list field itself. It is defined
-/// as alias to sbe_example::sbe2comms::groupList common definition. The latter implements the
+/// as alias to extension::sbe2comms::groupList common definition. The latter implements the
 /// group list field by extending \b comms::field::ArrayList and overriding
 /// some member functions. Accessing the fields in the group list may look
 /// like this:
@@ -1367,7 +1367,7 @@
 ///
 /// The \b SBE schemas allow usage of \b offset and \b
 /// \b blockLength attribute, which may introduce padding
-/// between the fields. It is implemented as alias to sbe_example::sbe2comms::pad
+/// between the fields. It is implemented as alias to extension::sbe2comms::pad
 /// field, which is implemented as \b comms::field::ArrayList of raw data.
 ///
 /// \section main_page_transport Transport Frame
@@ -1376,24 +1376,24 @@
 /// the examples in this section.
 ///
 /// The \b SBE schema specification requires definition of message header
-/// (\ref sbe_example::field::messageHeader) which must precede the message payload. The
+/// (\ref extension::field::messageHeader) which must precede the message payload. The
 /// \b sbe2comms compiler generates TransportFrame.h header file which defines
-/// \ref sbe_example::MessageHeaderFrame class. The latter can be used to read the raw
+/// \ref extension::MessageHeaderFrame class. The latter can be used to read the raw
 /// data from the buffer, decode the message header, create appropriate message
 /// object, and then read the message contents.
 ///
-/// The \ref sbe_example::MessageHeaderFrame class receives multiple template
+/// The \ref extension::MessageHeaderFrame class receives multiple template
 /// parameters. The first one is the common interface class for all
-/// \b input messages. It must be a variant of \ref sbe_example::Message. The second
+/// \b input messages. It must be a variant of \ref extension::Message. The second
 /// template parameter is \b std::tuple of all the \b input messages that
 /// need to be recongized and appropriate message object to be created.
 /// For example:
 /// \code
-/// using MyInterface = sbe_example::Message<...>;
-/// using MyTransport = sbe_example::MessageHeaderFrame<MyInterface, sbe_example::AllMessages<MyInterface> >;
+/// using MyInterface = extension::Message<...>;
+/// using MyTransport = extension::MessageHeaderFrame<MyInterface, extension::AllMessages<MyInterface> >;
 /// \endcode
 /// Note, that messages inside the provided \b std::tuple must be sorted
-/// according by their numeric IDs. There is \ref sbe_example::AllMessages type
+/// according by their numeric IDs. There is \ref extension::AllMessages type
 /// which is generated by the \b sbe2comms compiler. It can be used as reference.
 ///
 /// The transport framing class defines the following types and member functions.
@@ -1521,16 +1521,16 @@
 /// \endcode
 ///
 /// \subsection main_page_transport_options Extra Protocol Options
-/// The third template parameter of the \ref sbe_example::MessageHeaderFrame class is
+/// The third template parameter of the \ref extension::MessageHeaderFrame class is
 /// protocol customisation options, which can be used to update the
-/// default generated behaviour of \ref sbe_example::field::messageHeader member fields.
+/// default generated behaviour of \ref extension::field::messageHeader member fields.
 /// Please refer to \ref main_page_customization section below for more info.
 ///
 /// \subsection main_page_transport_alloc Allocation of Message Object
 /// By default the message object is allocated dynamically and held by
 /// \b std::unique_ptr. However it is possible to modify this behaviour
 /// by passing extra options to internally used \b comms::MsgFactory class
-/// using fourth template parameter of \ref sbe_example::MessageHeaderFrame.
+/// using fourth template parameter of \ref extension::MessageHeaderFrame.
 /// If \b comms::option::InPlaceAllocation option is used, the spacial
 /// "in place" allocation area will be used, which can contain any
 /// message object specified in the described earlier tuple of \b input
@@ -1558,18 +1558,18 @@
 /// \b NOTE, that it is possible to combine \b comms::option::InPlaceAllocation
 /// described earlier option with \b comms::option::SupportGenericMessage by
 /// bundling them together in \b std::tuple and passing the resulting type
-/// as a fourth template parameter to \ref sbe_example::MessageHeaderFrame.
+/// as a fourth template parameter to \ref extension::MessageHeaderFrame.
 ///
 /// \subsection main_page_transport_open Simple Open Framing Header
 /// The \b SBE specification also mentions <b>Simple Open Framing Header</b>.
-/// The \b sbe2comms compiler generates sbe_example::sbe2comms::openFramingHeader
+/// The \b sbe2comms compiler generates extension::sbe2comms::openFramingHeader
 /// class that implements normative example provided in the spec. However,
 /// it is possible to specify custom \b \<composite\> type with two member
 /// types \b messageLength and \b encodingType in the protocol schema and
 /// ask \b sbe2comms compiler use it instead.
 ///
-/// Similar to \ref sbe_example::MessageHeaderFrame, there is also \ref
-/// sbe_example::OpenFramingHeaderFrame, defined in the same TransportFrame.h file.
+/// Similar to \ref extension::MessageHeaderFrame, there is also \ref
+/// extension::OpenFramingHeaderFrame, defined in the same TransportFrame.h file.
 /// It prefixes the required "Message Header" with "Simple Open Framing Header" and
 /// defines the same public interface.
 ///
@@ -1584,19 +1584,19 @@
 /// \b std::back_insert_iterator on \b std::vector
 /// \code
 /// using MyInterface =
-///     sbe_example::Message<
+///     extension::Message<
 ///         ...,
 ///         comms::option::WriteIterator<std::back_insert_iterator<std::vector<std::uint8_t> > >
 ///     >;
 /// \endcode
 /// In this case it's not possible to go back and update previously written
 /// dummy \b messageLength value. As the result, a call to \b write()
-/// member function of \ref sbe_example::OpenFramingHeaderFrame will return
+/// member function of \ref extension::OpenFramingHeaderFrame will return
 /// \b comms::ErrorStatus::UpdateRequired. It means that a <b> random access
 /// iterator</b> needs to be created and \b update() member function needs
 /// to be called to update the \b messageLength info.
 /// \code
-/// using MyTransport = sbe_example::OpenFramingHeaderFrame<MyInterface, mine::AllMessages<MyInterface> >;
+/// using MyTransport = extension::OpenFramingHeaderFrame<MyInterface, mine::AllMessages<MyInterface> >;
 /// MyTransport transport;
 /// void sendMessage(const MyMessage& msg)
 /// {
@@ -1617,9 +1617,9 @@
 ///
 /// \section main_page_msg_id Message ID
 /// The \b SBE schema defines IDs of the messages as numeric unsigned
-/// values. The \b sbe2comms compiler generates \ref sbe_example::MsgId enum
+/// values. The \b sbe2comms compiler generates \ref extension::MsgId enum
 /// for message identification purpose. The \b templateId member
-/// field of \ref sbe_example::field::messageHeader is used to carry message ID information.
+/// field of \ref extension::field::messageHeader is used to carry message ID information.
 /// It is defined as simple integral value \b \<type\> element. However,
 /// the \b sbe2comms compiler changes it to be implemented as
 /// \b comms::field::EnumValue for more convenient usage.
@@ -1627,7 +1627,7 @@
 /// Some protocols may define messages that carry other message ID information
 /// in their payload. In such case it is recommended to define external
 /// type for message IDs and make \b templateId member
-/// field of \ref sbe_example::field::messageHeader to be a \b \<ref\> to it.
+/// field of \ref extension::field::messageHeader to be a \b \<ref\> to it.
 /// \code
 /// <type name="ExtTemplateId" primitiveType="uint16"/>
 /// <composite name="messageHeader">
@@ -1648,7 +1648,7 @@
 /// class ExtTemplateId : public
 ///     comms::field::EnumValue<
 ///         FieldBase,
-///         sbe_example::MsgId,
+///         extension::MsgId,
 ///         TOpt...,
 ///         ...
 ///     >
@@ -1667,21 +1667,21 @@
 /// use cases or generated code may be too generic and some specific application
 /// may require a bit of fine tuning. The code generated by \b sbe2comms
 /// compiler allows such configuration using extra <b>protocol options</b>.
-/// Every message class from \ref sbe_example::message namespace receives a second
-/// template parameter, which defaults to \ref sbe_example::DefaultOptions from
+/// Every message class from \ref extension::message namespace receives a second
+/// template parameter, which defaults to \ref extension::DefaultOptions from
 /// DefaultOptions.h header file. Please take a look inside. The inner
 /// scopes of various types a mapped one-to-one with scopes of fields
-/// in \ref sbe_example namespace. These inner types are passed as extra options
-/// to various fields. For example \ref sbe_example::DefaultOptions::field::messageHeaderMembers::version
-/// type is passed as extra options to \ref sbe_example::field::messageHeaderMembers::version
+/// in \ref extension namespace. These inner types are passed as extra options
+/// to various fields. For example \ref extension::DefaultOptions::field::messageHeaderMembers::version
+/// type is passed as extra options to \ref extension::field::messageHeaderMembers::version
 /// field.
 ///
-/// All the types inside \ref sbe_example::DefaultOptions are defined to be
+/// All the types inside \ref extension::DefaultOptions are defined to be
 /// \b comms::option::EmptyOption, which does nothing. In order to modify
 /// the default behaviour of specific fields, new struct / class with similar
 /// inner structure needs to be defined with appropriate inner type values and
-/// passed as a template parameter instead of \ref sbe_example::DefaultOptions. The
-/// way is to inherit from \ref sbe_example::DefaultOptions and override types for
+/// passed as a template parameter instead of \ref extension::DefaultOptions. The
+/// way is to inherit from \ref extension::DefaultOptions and override types for
 /// selected number of fields. If multiple extra options need to be passed, just
 /// bundle them together in \b std::tuple.
 ///
@@ -1690,11 +1690,11 @@
 /// the actual value is not as expected. Below is how custom protocol options
 /// will look like:
 /// \code
-/// struct MyOptions : public sbe_example::DefaultOptions
+/// struct MyOptions : public extension::DefaultOptions
 /// {
-///     struct field : public sbe_example::DefaultOptions::field
+///     struct field : public extension::DefaultOptions::field
 ///     {
-///         struct messageHeaderMembers : public sbe_example::DefaultOptions::field::messageHeaderMembers
+///         struct messageHeaderMembers : public extension::DefaultOptions::field::messageHeaderMembers
 ///         {
 ///             using version =
 ///                 std::tuple<
@@ -1708,7 +1708,7 @@
 /// Note the usage of \b comms::option::ValidNumValueOverride instead of
 /// \b comms::option::ValidNumValue. The latter would just add new value to
 /// the existing valid value ranges, while the former will \b override the
-/// default valid range used in the definition of \ref sbe_example::field::messageHeaderMembers::version.
+/// default valid range used in the definition of \ref extension::field::messageHeaderMembers::version.
 ///
 /// Please read the documentation for all the classes in \b comms::field
 /// namespace from the \b COMMS library. Every such class lists the
@@ -1746,9 +1746,9 @@
 /// possible to use any external one using \b comms::option::CustomStorageType
 /// option. For example:
 /// \code
-/// struct MyOptions : public sbe_example::DefaultOptions
+/// struct MyOptions : public extension::DefaultOptions
 /// {
-///     struct field : public sbe_example::DefaultOptions::field
+///     struct field : public extension::DefaultOptions::field
 ///     {
 ///         using someList = comms::option::CustomStorageType<boost::circular_buffer<std::uint8_t> >;
 ///     };
@@ -1769,9 +1769,9 @@
 /// However, it is possible to specify this additional information using
 /// extra options from the COMMS library.
 /// \code
-/// struct MyOptions : public sbe_example::DefaultOptions
+/// struct MyOptions : public extension::DefaultOptions
 /// {
-///     struct field : public sbe_example::DefaultOptions::field
+///     struct field : public extension::DefaultOptions::field
 ///     {
 ///         using distance =
 ///             std::tuple<
@@ -1805,7 +1805,7 @@
 /// turns out to be a C++ keyword, then \b _ (underscore) suffix is
 /// appended to the name of the class. The same update is performed if
 /// the name is the same as one of the generated namespaces (
-/// \ref sbe_example, \b message, \b field, \b sbe2comms) or namespaces and/or
+/// \ref extension, \b message, \b field, \b sbe2comms) or namespaces and/or
 /// function names used by the \b COMMS library.
 /// Also generated padding fields (see \ref main_page_pad) will have
 /// \b padX_ (with \b _ suffix) format where \b X is a sequential

@@ -5,7 +5,7 @@
 
 #include "comms_champion/comms_champion.h"
 
-namespace sbe_example
+namespace extension
 {
 
 namespace cc_plugin
@@ -24,5 +24,5 @@ public:
 
 } // namespace cc_plugin
 
-} // namespace sbe_example
+} // namespace extension
 

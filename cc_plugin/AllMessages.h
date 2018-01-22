@@ -4,7 +4,7 @@
 
 #include "cc_plugin/message/Car.h"
 
-namespace sbe_example
+namespace extension
 {
 
 namespace cc_plugin
@@ -17,5 +17,5 @@ using AllMessages =
 
 } // namespace cc_plugin
 
-} // namespace sbe_example
+} // namespace extension
 
