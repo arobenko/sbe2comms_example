@@ -74,12 +74,12 @@ struct cupHolderCount_t : public
 {
     /// \brief Update current version.
     /// \return \b true if field's content has been updated.
-    bool setVersion(unsigned value)
+    bool setVersion(unsigned val)
     {
         using Base = typename std::decay<decltype(toFieldBase(*this))>::type;
-        bool updated = Base::field().setVersion(value);
+        bool updated = Base::field().setVersion(val);
         auto mode = comms::field::OptionalMode::Exists;
-        if (value < 1U) {
+        if (val < 1U) {
             mode = comms::field::OptionalMode::Missing;
         }
 
