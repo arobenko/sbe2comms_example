@@ -29,7 +29,7 @@ struct varDataEncodingMembers
     template <typename... TOpt>
     class length_ : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint32_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 1073741824L>
@@ -37,7 +37,7 @@ struct varDataEncodingMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint32_t,
                 TOpt...,
                 comms::option::ValidNumValueRange<0, 1073741824L>
@@ -58,14 +58,14 @@ struct varDataEncodingMembers
     template <typename... TOpt>
     class varData : public
         comms::field::ArrayList<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint8_t,
             TOpt...
         >
     {
         using Base =
             comms::field::ArrayList<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint8_t,
                 TOpt...
             >;
@@ -102,7 +102,7 @@ template<
 >
 class varDataEncoding : public
     comms::field::Bundle<
-        FieldBase,
+        sbe_example::field::FieldBase,
         varDataEncodingMembers::All<
             TOpt_length,
             TOpt_varData
@@ -111,7 +111,7 @@ class varDataEncoding : public
 {
     using Base =
         comms::field::Bundle<
-            FieldBase,
+            sbe_example::field::FieldBase,
             varDataEncodingMembers::All<
                 TOpt_length,
                 TOpt_varData
@@ -134,9 +134,9 @@ public:
     /// \brief Update current message version.
     /// \details Calls setVersion() of every member.
     /// \return \b true if any of the fields returns \b true.
-    bool setVersion(unsigned value)
+    bool setVersion(unsigned val)
     {
-        return comms::util::tupleAccumulate(Base::value(), false, sbe2comms::VersionSetter(value));
+        return comms::util::tupleAccumulate(Base::value(), false, sbe2comms::VersionSetter(val));
     }
 };
 

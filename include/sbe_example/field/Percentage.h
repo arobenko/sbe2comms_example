@@ -22,7 +22,7 @@ namespace field
 template <typename... TOpt>
 class Percentage : public
     comms::field::IntValue<
-        FieldBase,
+        sbe_example::field::FieldBase,
         std::int8_t,
         TOpt...,
         comms::option::ValidNumValueRange<0, 100>
@@ -30,7 +30,7 @@ class Percentage : public
 {
     using Base =
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::int8_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 100>

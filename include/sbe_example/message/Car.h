@@ -46,7 +46,7 @@ struct CarFields
 {
     /// \brief Definition of "serialNumber" field.
     using serialNumber = sbe2comms::uint64<
-        field::FieldBase,
+        sbe_example::field::FieldBase,
         typename TOpt::message::CarFields::serialNumber
     >;
 
@@ -119,13 +119,13 @@ struct CarFields
     {
         /// \brief Definition of "speed" field.
         using speed = sbe2comms::uint16<
-            field::FieldBase,
+            sbe_example::field::FieldBase,
             typename TOpt::message::CarFields::fuelFiguresMembers::speed
         >;
 
         /// \brief Definition of "mpg" field.
         using mpg = sbe2comms::float_<
-            field::FieldBase,
+            sbe_example::field::FieldBase,
             typename TOpt::message::CarFields::fuelFiguresMembers::mpg
         >;
 
@@ -148,13 +148,13 @@ struct CarFields
     /// \brief Element of \ref fuelFigures list.
     class fuelFiguresElement : public
         comms::field::Bundle<
-            field::FieldBase,
+            sbe_example::field::FieldBase,
             typename fuelFiguresMembers::All
         >
     {
         using Base =
             comms::field::Bundle<
-                field::FieldBase,
+                sbe_example::field::FieldBase,
                 typename fuelFiguresMembers::All
             >;
 
@@ -173,7 +173,7 @@ struct CarFields
     /// \brief Definition of "fuelFigures" field.
     using fuelFigures =
         sbe2comms::groupList<
-            field::FieldBase,
+            sbe_example::field::FieldBase,
             fuelFiguresElement,
             field::groupSizeEncoding<
                 typename TOpt::field::groupSizeEncodingMembers::blockLength,
@@ -197,13 +197,13 @@ struct CarFields
         {
             /// \brief Definition of "mph" field.
             using mph = sbe2comms::uint16<
-                field::FieldBase,
+                sbe_example::field::FieldBase,
                 typename TOpt::message::CarFields::performanceFiguresMembers::accelerationMembers::mph
             >;
 
             /// \brief Definition of "seconds" field.
             using seconds = sbe2comms::float_<
-                field::FieldBase,
+                sbe_example::field::FieldBase,
                 typename TOpt::message::CarFields::performanceFiguresMembers::accelerationMembers::seconds
             >;
 
@@ -217,13 +217,13 @@ struct CarFields
         /// \brief Element of \ref acceleration list.
         class accelerationElement : public
             comms::field::Bundle<
-                field::FieldBase,
+                sbe_example::field::FieldBase,
                 typename accelerationMembers::All
             >
         {
             using Base =
                 comms::field::Bundle<
-                    field::FieldBase,
+                    sbe_example::field::FieldBase,
                     typename accelerationMembers::All
                 >;
 
@@ -241,7 +241,7 @@ struct CarFields
         /// \brief Definition of "acceleration" field.
         using acceleration =
             sbe2comms::groupList<
-                field::FieldBase,
+                sbe_example::field::FieldBase,
                 accelerationElement,
                 field::groupSizeEncoding<
                     typename TOpt::field::groupSizeEncodingMembers::blockLength,
@@ -261,13 +261,13 @@ struct CarFields
     /// \brief Element of \ref performanceFigures list.
     class performanceFiguresElement : public
         comms::field::Bundle<
-            field::FieldBase,
+            sbe_example::field::FieldBase,
             typename performanceFiguresMembers::All
         >
     {
         using Base =
             comms::field::Bundle<
-                field::FieldBase,
+                sbe_example::field::FieldBase,
                 typename performanceFiguresMembers::All
             >;
 
@@ -285,7 +285,7 @@ struct CarFields
     /// \brief Definition of "performanceFigures" field.
     using performanceFigures =
         sbe2comms::groupList<
-            field::FieldBase,
+            sbe_example::field::FieldBase,
             performanceFiguresElement,
             field::groupSizeEncoding<
                 typename TOpt::field::groupSizeEncodingMembers::blockLength,

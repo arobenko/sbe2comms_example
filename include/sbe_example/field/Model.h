@@ -27,7 +27,7 @@ enum class ModelVal : char
 template <typename... TOpt>
 class Model : public
     comms::field::EnumValue<
-        FieldBase,
+        sbe_example::field::FieldBase,
         ModelVal,
         TOpt...,
         comms::option::DefaultNumValue<65>,
@@ -36,7 +36,7 @@ class Model : public
 {
     using Base =
         comms::field::EnumValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             ModelVal,
             TOpt...,
             comms::option::DefaultNumValue<65>,

@@ -44,7 +44,7 @@ using MessageHeaderFrame =
         TMessages,
         comms::protocol::MsgDataLayer<
             comms::field::ArrayList<
-                field::FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint8_t,
                 TDataStorageOpt
             >

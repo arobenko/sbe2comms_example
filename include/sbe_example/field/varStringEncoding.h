@@ -29,7 +29,7 @@ struct varStringEncodingMembers
     template <typename... TOpt>
     class length_ : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint32_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 1073741824L>
@@ -37,7 +37,7 @@ struct varStringEncodingMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint32_t,
                 TOpt...,
                 comms::option::ValidNumValueRange<0, 1073741824L>
@@ -58,13 +58,13 @@ struct varStringEncodingMembers
     template <typename... TOpt>
     class varData : public
          comms::field::String<
-            FieldBase,
+            sbe_example::field::FieldBase,
             TOpt...
         >
     {
             using Base =
              comms::field::String<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 TOpt...
             >;
 

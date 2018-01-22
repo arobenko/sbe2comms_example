@@ -23,7 +23,7 @@ namespace field
 template <typename... TOpt>
 class someNumbersElement : public
     comms::field::IntValue<
-        FieldBase,
+        sbe_example::field::FieldBase,
         std::uint32_t,
         TOpt...,
         comms::option::ValidNumValueRange<0, 0xfffffffeLL>
@@ -31,7 +31,7 @@ class someNumbersElement : public
 {
     using Base =
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint32_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 0xfffffffeLL>
@@ -52,7 +52,7 @@ public:
 template <typename... TOpt>
 class someNumbers : public
     comms::field::ArrayList<
-        FieldBase,
+        sbe_example::field::FieldBase,
         someNumbersElement<>,
         TOpt...,
         comms::option::SequenceFixedSize<5>
@@ -60,7 +60,7 @@ class someNumbers : public
 {
     using Base =
         comms::field::ArrayList<
-            FieldBase,
+            sbe_example::field::FieldBase,
             someNumbersElement<>,
             TOpt...,
             comms::option::SequenceFixedSize<5>

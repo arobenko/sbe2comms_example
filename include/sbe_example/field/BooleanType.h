@@ -26,7 +26,7 @@ enum class BooleanTypeVal : std::uint8_t
 template <typename... TOpt>
 class BooleanType : public
     comms::field::EnumValue<
-        FieldBase,
+        sbe_example::field::FieldBase,
         BooleanTypeVal,
         TOpt...,
         comms::option::ValidNumValueRange<0, 1>
@@ -34,7 +34,7 @@ class BooleanType : public
 {
     using Base =
         comms::field::EnumValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             BooleanTypeVal,
             TOpt...,
             comms::option::ValidNumValueRange<0, 1>

@@ -18,7 +18,7 @@ namespace field
 template <typename... TOpt>
 class VehicleCode : public
     comms::field::String<
-        FieldBase,
+        sbe_example::field::FieldBase,
         comms::option::SequenceFixedSize<6>,
         TOpt...
     >
@@ -26,7 +26,7 @@ class VehicleCode : public
 {
     using Base =
         comms::field::String<
-            FieldBase,
+            sbe_example::field::FieldBase,
             comms::option::SequenceFixedSize<6>,
             TOpt...
         >

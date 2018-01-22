@@ -30,7 +30,7 @@ struct messageHeaderMembers
     template <typename... TOpt>
     class blockLength : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint16_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 65534L>
@@ -38,7 +38,7 @@ struct messageHeaderMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint16_t,
                 TOpt...,
                 comms::option::ValidNumValueRange<0, 65534L>
@@ -60,7 +60,7 @@ struct messageHeaderMembers
     template <typename... TOpt>
     class templateId : public
         comms::field::EnumValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             sbe_example::MsgId,
             TOpt...,
             comms::option::DefaultNumValue<1>,
@@ -69,7 +69,7 @@ struct messageHeaderMembers
     {
         using Base =
             comms::field::EnumValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 sbe_example::MsgId,
                 TOpt...,
                 comms::option::DefaultNumValue<1>,
@@ -92,7 +92,7 @@ struct messageHeaderMembers
     template <typename... TOpt>
     class schemaId : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint16_t,
             TOpt...,
             comms::option::DefaultNumValue<1>,
@@ -102,7 +102,7 @@ struct messageHeaderMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint16_t,
                 TOpt...,
                 comms::option::DefaultNumValue<1>,
@@ -125,7 +125,7 @@ struct messageHeaderMembers
     template <typename... TOpt>
     class version : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint16_t,
             TOpt...,
             comms::option::DefaultNumValue<1>,
@@ -134,7 +134,7 @@ struct messageHeaderMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint16_t,
                 TOpt...,
                 comms::option::DefaultNumValue<1>,
@@ -184,7 +184,7 @@ template<
 >
 class messageHeader : public
     comms::field::Bundle<
-        FieldBase,
+        sbe_example::field::FieldBase,
         messageHeaderMembers::All<
             TOpt_blockLength,
             TOpt_templateId,
@@ -195,7 +195,7 @@ class messageHeader : public
 {
     using Base =
         comms::field::Bundle<
-            FieldBase,
+            sbe_example::field::FieldBase,
             messageHeaderMembers::All<
                 TOpt_blockLength,
                 TOpt_templateId,
@@ -224,9 +224,9 @@ public:
     /// \brief Update current message version.
     /// \details Calls setVersion() of every member.
     /// \return \b true if any of the fields returns \b true.
-    bool setVersion(unsigned value)
+    bool setVersion(unsigned val)
     {
-        return comms::util::tupleAccumulate(Base::value(), false, sbe2comms::VersionSetter(value));
+        return comms::util::tupleAccumulate(Base::value(), false, sbe2comms::VersionSetter(val));
     }
 };
 

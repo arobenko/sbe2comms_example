@@ -32,7 +32,7 @@ struct EngineMembers
     template <typename... TOpt>
     class capacity : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint16_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 65534L>
@@ -40,7 +40,7 @@ struct EngineMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint16_t,
                 TOpt...,
                 comms::option::ValidNumValueRange<0, 65534L>
@@ -61,7 +61,7 @@ struct EngineMembers
     template <typename... TOpt>
     class numCylinders : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint8_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 254>
@@ -69,7 +69,7 @@ struct EngineMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint8_t,
                 TOpt...,
                 comms::option::ValidNumValueRange<0, 254>
@@ -90,7 +90,7 @@ struct EngineMembers
     template <typename... TOpt>
     class maxRpm : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint16_t,
             TOpt...,
             comms::option::ValidNumValue<9000>,
@@ -100,7 +100,7 @@ struct EngineMembers
     {
         using Base=
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint16_t,
                 TOpt...,
                 comms::option::ValidNumValue<9000>,
@@ -123,7 +123,7 @@ struct EngineMembers
     template <typename... TOpt>
     class manufacturerCode : public
         comms::field::String<
-            FieldBase,
+            sbe_example::field::FieldBase,
             comms::option::SequenceFixedSize<3>,
             TOpt...
         >
@@ -131,7 +131,7 @@ struct EngineMembers
     {
         using Base =
             comms::field::String<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 comms::option::SequenceFixedSize<3>,
                 TOpt...
             >
@@ -170,14 +170,14 @@ struct EngineMembers
     template <typename... TOpt>
     class fuel : public 
         comms::field::String<
-            FieldBase,
+            sbe_example::field::FieldBase,
             TOpt...,
             comms::option::EmptySerialization
         >
     {
         using Base =
             comms::field::String<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 TOpt...,
                 comms::option::EmptySerialization
             >;
@@ -283,7 +283,7 @@ template<
 >
 class Engine : public
     comms::field::Bundle<
-        FieldBase,
+        sbe_example::field::FieldBase,
         EngineMembers::All<
             TOpt_capacity,
             TOpt_numCylinders,
@@ -299,7 +299,7 @@ class Engine : public
 {
     using Base =
         comms::field::Bundle<
-            FieldBase,
+            sbe_example::field::FieldBase,
             EngineMembers::All<
                 TOpt_capacity,
                 TOpt_numCylinders,
@@ -341,9 +341,9 @@ public:
     /// \brief Update current message version.
     /// \details Calls setVersion() of every member.
     /// \return \b true if any of the fields returns \b true.
-    bool setVersion(unsigned value)
+    bool setVersion(unsigned val)
     {
-        return comms::util::tupleAccumulate(Base::value(), false, sbe2comms::VersionSetter(value));
+        return comms::util::tupleAccumulate(Base::value(), false, sbe2comms::VersionSetter(val));
     }
 };
 

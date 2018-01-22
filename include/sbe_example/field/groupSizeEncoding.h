@@ -28,7 +28,7 @@ struct groupSizeEncodingMembers
     template <typename... TOpt>
     class blockLength : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint16_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 65534L>
@@ -36,7 +36,7 @@ struct groupSizeEncodingMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint16_t,
                 TOpt...,
                 comms::option::ValidNumValueRange<0, 65534L>
@@ -57,7 +57,7 @@ struct groupSizeEncodingMembers
     template <typename... TOpt>
     class numInGroup : public
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint16_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 65534L>
@@ -65,7 +65,7 @@ struct groupSizeEncodingMembers
     {
         using Base =
             comms::field::IntValue<
-                FieldBase,
+                sbe_example::field::FieldBase,
                 std::uint16_t,
                 TOpt...,
                 comms::option::ValidNumValueRange<0, 65534L>
@@ -104,7 +104,7 @@ template<
 >
 class groupSizeEncoding : public
     comms::field::Bundle<
-        FieldBase,
+        sbe_example::field::FieldBase,
         groupSizeEncodingMembers::All<
             TOpt_blockLength,
             TOpt_numInGroup
@@ -113,7 +113,7 @@ class groupSizeEncoding : public
 {
     using Base =
         comms::field::Bundle<
-            FieldBase,
+            sbe_example::field::FieldBase,
             groupSizeEncodingMembers::All<
                 TOpt_blockLength,
                 TOpt_numInGroup
@@ -136,9 +136,9 @@ public:
     /// \brief Update current message version.
     /// \details Calls setVersion() of every member.
     /// \return \b true if any of the fields returns \b true.
-    bool setVersion(unsigned value)
+    bool setVersion(unsigned val)
     {
-        return comms::util::tupleAccumulate(Base::value(), false, sbe2comms::VersionSetter(value));
+        return comms::util::tupleAccumulate(Base::value(), false, sbe2comms::VersionSetter(val));
     }
 };
 

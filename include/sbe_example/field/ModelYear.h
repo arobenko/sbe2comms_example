@@ -22,7 +22,7 @@ namespace field
 template <typename... TOpt>
 class ModelYear : public
     comms::field::IntValue<
-        FieldBase,
+        sbe_example::field::FieldBase,
         std::uint16_t,
         TOpt...,
         comms::option::ValidNumValueRange<0, 65534L>
@@ -30,7 +30,7 @@ class ModelYear : public
 {
     using Base =
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint16_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 65534L>

@@ -18,7 +18,7 @@ namespace field
 template <typename... TOpt>
 class OptionalExtras : public
     comms::field::BitmaskValue<
-        FieldBase,
+        sbe_example::field::FieldBase,
         TOpt...,
         comms::option::FixedLength<1>,
         comms::option::BitmaskReservedBits<0xf8>
@@ -26,7 +26,7 @@ class OptionalExtras : public
 {
     using Base =
         comms::field::BitmaskValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             TOpt...,
             comms::option::FixedLength<1>,
             comms::option::BitmaskReservedBits<0xf8>

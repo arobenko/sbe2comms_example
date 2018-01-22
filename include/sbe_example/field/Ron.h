@@ -22,7 +22,7 @@ namespace field
 template <typename... TOpt>
 class Ron : public
     comms::field::IntValue<
-        FieldBase,
+        sbe_example::field::FieldBase,
         std::uint8_t,
         TOpt...,
         comms::option::ValidNumValueRange<90, 110>,
@@ -31,7 +31,7 @@ class Ron : public
 {
     using Base =
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint8_t,
             TOpt...,
             comms::option::ValidNumValueRange<90, 110>,

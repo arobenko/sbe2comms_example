@@ -23,7 +23,7 @@ namespace field
 template <typename... TOpt>
 class cupHolderCount_tField : public
     comms::field::IntValue<
-        FieldBase,
+        sbe_example::field::FieldBase,
         std::uint8_t,
         TOpt...,
         comms::option::ValidNumValueRange<0, 254>,
@@ -33,7 +33,7 @@ class cupHolderCount_tField : public
 {
     using Base=
         comms::field::IntValue<
-            FieldBase,
+            sbe_example::field::FieldBase,
             std::uint8_t,
             TOpt...,
             comms::option::ValidNumValueRange<0, 254>,

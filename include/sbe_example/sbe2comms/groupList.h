@@ -154,9 +154,9 @@ struct groupList : public
         return TDimensionType::minLength();
     }
 
-    bool setVersion(unsigned value)
+    bool setVersion(unsigned val)
     {
-        m_version = value;
+        m_version = val;
 
         using Base = typename std::decay<decltype(toFieldBase(*this))>::type;
         auto& list = Base::value();
