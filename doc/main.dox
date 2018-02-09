@@ -398,7 +398,7 @@
 ///
 /// protected:
 ///     // Overriding polymorphic read
-///     virtual comms::ErrorStatus readImpl(ReadIterator& iter, std::size_t len)
+///     virtual comms::ErrorStatus readImpl(ReadIterator& iter, std::size_t len) override
 ///     {
 ///         return doRead(iter, len);
 ///     }
@@ -577,7 +577,7 @@
 /// bool result = msg->dispatch(handler);
 /// \endcode
 /// The \b COMMS library provides a helper \b comms::GenericHandler class,
-/// which can be used for easier defined of the custom handler one. The
+/// which can be used for easier definition of the custom handler one. The
 /// \b comms::GenericHandler receives 3 template parameters. The first one
 /// is common interface class for all the messages, second is all the message
 /// types to handle bundled in \b std::tuple, and the third is optional one
@@ -1369,6 +1369,84 @@
 /// \b blockLength attribute, which may introduce padding
 /// between the fields. It is implemented as alias to extension::sbe2comms::pad
 /// field, which is implemented as \b comms::field::ArrayList of raw data.
+///
+/// \section main_page_schema_version Schema Version
+/// The \b SBE schema allows adding new fields (with non-zero
+/// \b sinceVersion attribute) in new versions of the
+/// schema.
+/// \code
+/// <field name="someNew" id="100" type="uint16" sinceVersion="1"/>
+/// \endcode
+/// Values of such fields may or may not exist in the communicated data,
+/// depending on the reported schema version of the received message. The
+/// \b sbe2comms compiler defines such field in two stages. First, it defines
+/// it as usual field, but with \b *Field suffix in its name. Then, it wraps
+/// it in \b comms::field::Optional.
+/// \code
+/// template <typename... TOpt>
+/// class someNewField : public comms::field::IntValue<...>
+/// {
+///     ...
+/// };
+///
+/// template <typename... TOpt>
+/// struct someNew : public
+///     comms::field::Optional<
+///         someNewField<TOpt...>,
+///         comms::option::DefaultOptionalMode<comms::field::OptionalMode::Exists>
+///     >
+/// {
+///     ...
+/// };
+/// \endcode
+/// \b NOTE, that \b comms::field::Optional class wraps the field and has
+/// the following public interface types and functions:
+/// \code
+/// class comms::field::Optional
+/// {
+/// public:
+///     // Type of the wrapped field
+///     using Field = ...;
+///
+///     // Access to the wrapped field
+///     Field& field();
+///     const Field& field() const
+///
+///     // Get/set mode
+///     comms::field::OptionalMode getMode() const;
+///     void setMode(comms::field::OptionalMode mode);
+///
+///     // Simple wrappers to get/set mode functions above
+///     bool isMissing() const;
+///     void setMissing();
+///     bool doesExist() const;
+///     void setExists();
+///     bool isTentative();
+///     void setTentative();
+/// };
+/// \endcode
+/// When version of the incoming message is known, the mode of such field is
+/// updated accordingly. Then, the \b read operation that follows will either
+/// read value properly or will do nothing without updating the iterator.
+/// Processing of such field may look like this:
+/// \code
+/// void processOptionalField(someNew<>& f)
+/// {
+///     std::uint16_t value = 0; // some default value
+///     if (f.doesExist()) {
+///         value = f.field().value(); // get the real value
+///     }
+///     ... // do something with value
+/// }
+/// \endcode
+/// Please pay attention to the differences between the optional fields
+/// defined by the schema (with \b presence="optional" attribute) and
+/// fields that implemented using \b comms::field::Optional. These are
+/// two completely different things. The value of the former is always
+/// transmitted on the I/O link, it just has a special \b null value. The
+/// latter, on the other hand, wraps fields that were introduced in later
+/// versions of the schema, values of which may or may not be transmitted over
+/// the I/O link.
 ///
 /// \section main_page_transport Transport Frame
 /// It is highly recommended to thorougly read the <b>Protocol Stack Tutorial</b> page
