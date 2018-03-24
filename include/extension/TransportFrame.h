@@ -7,7 +7,6 @@
 
 #include "comms/protocol/MsgDataLayer.h"
 #include "comms/options.h"
-#include "comms/field/ArrayList.h"
 #include "MessageHeaderLayer.h"
 #include "OpenFramingHeaderLayer.h"
 #include "DefaultOptions.h"
@@ -42,13 +41,7 @@ using MessageHeaderFrame =
     MessageHeaderLayer<
         TMsgBase,
         TMessages,
-        comms::protocol::MsgDataLayer<
-            comms::field::ArrayList<
-                extension::field::FieldBase,
-                std::uint8_t,
-                TDataStorageOpt
-            >
-        >,
+        comms::protocol::MsgDataLayer<TDataStorageOpt>,
         MessageHeaderLayerField<TOpt>,
         TFactoryOpt
     >;
